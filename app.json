@@ -1,19 +1,26 @@
 {
   "expo": {
-    "name": "AbrahamHicksToolkit",
+    "name": "Law of Attraction Toolkit",
     "slug": "AbrahamHicksToolkit",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/AbrahamAppLogo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
+      "image": "./assets/AbrahamLaunchScreen.png",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.amandaplanet.AbrahamHicksToolkit"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +28,23 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "react-native-audio-api"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "46680b99-4fa5-42e9-99a1-c1da4f16ff6d"
+      }
     }
   }
 }
