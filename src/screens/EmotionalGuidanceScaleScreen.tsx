@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -150,9 +150,12 @@ export default function EmotionalGuidanceScaleScreen() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 8,
+      // Claim the touch immediately so swipes aren't lost to parent scrollers
+      onStartShouldSetPanResponder: () => true,
       onPanResponderRelease: (_, gs) => {
-        if (gs.dy > 40) hidePanel();
+        const isTap  = Math.abs(gs.dx) < 10 && Math.abs(gs.dy) < 10;
+        const isSwipeDown = gs.dy > 40;
+        if (isTap || isSwipeDown) hidePanel();
       },
     })
   ).current;
@@ -173,7 +176,10 @@ export default function EmotionalGuidanceScaleScreen() {
       toValue: PANEL_OFFSET,
       duration: 220,
       useNativeDriver: true,
-    }).start(onDone);
+    }).start(() => {
+      setSelectedLevel(null);
+      onDone?.();
+    });
   };
 
   const handleSelect = (level: number) => {
@@ -192,18 +198,6 @@ export default function EmotionalGuidanceScaleScreen() {
 
   const recommendation = selectedLevel ? getRecommendation(selectedLevel) : null;
   const selectedColor = selectedLevel ? EMOTIONS[selectedLevel - 1].color : '#7B4FA6';
-
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        // Reset panel when leaving this screen so the overlay doesn't block
-        // the header on return.
-        isPanelVisible.current = false;
-        panelAnim.setValue(PANEL_OFFSET);
-        setSelectedLevel(null);
-      };
-    }, [panelAnim])
-  );
 
   const navigateTo = (screen: ToolScreen) => {
     if (screen === 'Book') navigation.navigate('Book');
@@ -255,7 +249,7 @@ export default function EmotionalGuidanceScaleScreen() {
                   },
                 ]}
                 onPress={() => handleSelect(emotion.level)}
-                activeOpacity={0.7}
+                activeOpacity={1}
               >
                 <View style={[styles.levelBadge, { backgroundColor: emotion.color }]}>
                   <Text style={styles.levelNum}>{emotion.level}</Text>
@@ -272,44 +266,38 @@ export default function EmotionalGuidanceScaleScreen() {
           })}
         </ScrollView>
 
-        {/* Tap-away overlay */}
-        {selectedLevel !== null && (
-          <TouchableOpacity
-            style={styles.overlay}
-            activeOpacity={1}
-            onPress={() => hidePanel()}
-          />
-        )}
-
         {/* Sliding recommendation panel */}
         <Animated.View
           style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}
         >
-          <View style={[styles.panelStripe, { backgroundColor: selectedColor }]} />
-
-          {/* Drag handle */}
-          <View style={styles.handleZone} {...panResponder.panHandlers}>
-            <View style={styles.handle} />
+          {/* Swipe zone: stripe + handle + title + message all dismiss on swipe/tap */}
+          <View {...panResponder.panHandlers}>
+            <View style={[styles.panelStripe, { backgroundColor: selectedColor }]} />
+            <View style={styles.handleZone}>
+              <View style={styles.handle} />
+            </View>
+            {recommendation && (
+              <>
+                <Text style={styles.panelTitle}>{recommendation.title}</Text>
+                <Text style={styles.panelMessage}>{recommendation.message}</Text>
+              </>
+            )}
           </View>
 
           {recommendation && (
-            <>
-              <Text style={styles.panelTitle}>{recommendation.title}</Text>
-              <Text style={styles.panelMessage}>{recommendation.message}</Text>
-              <View style={styles.toolRow}>
-                {recommendation.tools.map((tool) => (
-                  <TouchableOpacity
-                    key={tool.screen}
-                    style={[styles.toolBtn, { flexBasis: recommendation.tools.length >= 5 ? '30%' : '47%' }]}
-                    onPress={() => navigateTo(tool.screen)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.toolEmoji}>{tool.emoji}</Text>
-                    <Text style={styles.toolLabel}>{tool.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
+            <View style={styles.toolRow}>
+              {recommendation.tools.map((tool) => (
+                <TouchableOpacity
+                  key={tool.screen}
+                  style={[styles.toolBtn, { flexBasis: recommendation.tools.length >= 5 ? '30%' : '47%' }]}
+                  onPress={() => navigateTo(tool.screen)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.toolEmoji}>{tool.emoji}</Text>
+                  <Text style={styles.toolLabel}>{tool.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           )}
         </Animated.View>
       </SafeAreaView>
@@ -434,10 +422,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     gap: 4,
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
   },
   handleZone: {
     alignItems: 'center',
