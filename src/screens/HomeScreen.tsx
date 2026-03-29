@@ -116,6 +116,21 @@ export default function HomeScreen() {
               </View>
               <Text style={styles.cardArrow}>›</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate('Placemat')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.cardEmoji}>🍽️</Text>
+              <View style={styles.cardText}>
+                <Text style={styles.cardTitle}>Placemat Process</Text>
+                <Text style={styles.cardDesc}>
+                  Decide what's yours to do — and hand the rest to the Universe
+                </Text>
+              </View>
+              <Text style={styles.cardArrow}>›</Text>
+            </TouchableOpacity>
           </ScrollView>
 
           <View style={styles.footerRow}>

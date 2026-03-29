@@ -14,6 +14,8 @@ import CreativeWorkshopTopicScreen from '../screens/CreativeWorkshopTopicScreen'
 import CreativeWorkshopItemScreen from '../screens/CreativeWorkshopItemScreen';
 import CreativeWorkshopWantScreen from '../screens/CreativeWorkshopWantScreen';
 import CreativeWorkshopArchiveScreen from '../screens/CreativeWorkshopArchiveScreen';
+import PlacematScreen from '../screens/PlacematScreen';
+import PlacematArchiveScreen from '../screens/PlacematArchiveScreen';
 import { Entry } from '../types';
 
 export type RootStackParamList = {
@@ -30,6 +32,8 @@ export type RootStackParamList = {
   CreativeWorkshopItem: { topic: string; label: string; emoji: string; color: string; itemId?: string };
   CreativeWorkshopWant: { topic: string; label: string; emoji: string; color: string; itemId: string };
   CreativeWorkshopArchive: undefined;
+  Placemat: undefined;
+  PlacematArchive: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -51,6 +55,8 @@ export default function AppNavigator() {
         <Stack.Screen name="CreativeWorkshopItem" component={CreativeWorkshopItemScreen} />
         <Stack.Screen name="CreativeWorkshopWant" component={CreativeWorkshopWantScreen} />
         <Stack.Screen name="CreativeWorkshopArchive" component={CreativeWorkshopArchiveScreen} />
+        <Stack.Screen name="Placemat" component={PlacematScreen} />
+        <Stack.Screen name="PlacematArchive" component={PlacematArchiveScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

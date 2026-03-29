@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,15 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
+  PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
 type Nav = StackNavigationProp<RootStackParamList>;
-type ToolScreen = 'Book' | 'FocusWheel' | 'Meditation' | 'SixtyEightSecond' | 'CreativeWorkshop';
+type ToolScreen = 'Book' | 'FocusWheel' | 'Meditation' | 'SixtyEightSecond' | 'CreativeWorkshop' | 'Placemat';
 
 type Tool = { screen: ToolScreen; label: string; emoji: string };
 type Recommendation = { title: string; message: string; tools: Tool[] };
@@ -48,13 +49,14 @@ function getRecommendation(level: number): Recommendation {
   // Book of Positive Aspects: levels 1–10
   // 68-Second Focus:          levels 1–11
   // Focus Wheel:              levels 8–17
+  // Placemat Process:         levels 2–11
   // Meditation:               all levels
 
-  if (level <= 5) {
+  if (level === 1) {
     return {
       title: "You're soaring! ✨",
       message:
-        'Your vibration is high. Use the Creative Workshop to clarify what you want, hold a thought for 68 seconds to send it into motion, or write in the Book of Positive Aspects.',
+        'Your vibration is at its highest. Use the Creative Workshop to clarify what you want, hold a thought for 68 seconds to send it into motion, or write in the Book of Positive Aspects.',
       tools: [
         { screen: 'Meditation',       label: 'Meditation',               emoji: '🧘' },
         { screen: 'SixtyEightSecond', label: '68-Second Focus',          emoji: '⏱️' },
@@ -63,15 +65,30 @@ function getRecommendation(level: number): Recommendation {
       ],
     };
   }
-  if (level <= 7) {
+  if (level <= 5) {
     return {
-      title: 'High vibration 🌟',
+      title: "You're soaring! ✨",
       message:
-        'Your vibration is strong. Hold a thought for 68 seconds to build momentum, or write in the Book of Positive Aspects to amplify what feels good.',
+        'Your vibration is high. Use the Creative Workshop to clarify what you want, hold a thought for 68 seconds to send it into motion, or write in the Book of Positive Aspects. The Placemat can help you stay light by handing off what doesn\'t need your energy.',
       tools: [
         { screen: 'Meditation',       label: 'Meditation',               emoji: '🧘' },
         { screen: 'SixtyEightSecond', label: '68-Second Focus',          emoji: '⏱️' },
         { screen: 'Book',             label: 'Book of Positive Aspects', emoji: '📖' },
+        { screen: 'CreativeWorkshop', label: 'Creative Workshop',        emoji: '🎨' },
+        { screen: 'Placemat',         label: 'Placemat Process',         emoji: '🍽️' },
+      ],
+    };
+  }
+  if (level <= 7) {
+    return {
+      title: 'High vibration 🌟',
+      message:
+        'Your vibration is strong. Hold a thought for 68 seconds to build momentum, or write in the Book of Positive Aspects to amplify what feels good. The Placemat can help you keep your plate light.',
+      tools: [
+        { screen: 'Meditation',       label: 'Meditation',               emoji: '🧘' },
+        { screen: 'SixtyEightSecond', label: '68-Second Focus',          emoji: '⏱️' },
+        { screen: 'Book',             label: 'Book of Positive Aspects', emoji: '📖' },
+        { screen: 'Placemat',         label: 'Placemat Process',         emoji: '🍽️' },
       ],
     };
   }
@@ -79,9 +96,10 @@ function getRecommendation(level: number): Recommendation {
     return {
       title: 'Great energy to work with 🌈',
       message:
-        'You have access to the full toolkit. The 68-Second Focus and Book of Positive Aspects work beautifully here, and the Focus Wheel can build even more momentum.',
+        'You have access to the full toolkit. The Placemat Process is great here — hand off what feels heavy so you can focus on what\'s truly yours. The Focus Wheel can build more momentum.',
       tools: [
         { screen: 'Meditation',       label: 'Meditation',               emoji: '🧘' },
+        { screen: 'Placemat',         label: 'Placemat Process',         emoji: '🍽️' },
         { screen: 'SixtyEightSecond', label: '68-Second Focus',          emoji: '⏱️' },
         { screen: 'Book',             label: 'Book of Positive Aspects', emoji: '📖' },
         { screen: 'FocusWheel',       label: 'Focus Wheel',              emoji: '🎯' },
@@ -90,13 +108,14 @@ function getRecommendation(level: number): Recommendation {
   }
   if (level === 11) {
     return {
-      title: 'A shift is within reach 🌿',
+      title: 'Feeling overwhelmed? Hand it off. 🌿',
       message:
-        'You can hold a positive thought from here. The 68-Second Focus or Focus Wheel will help you build momentum. Meditation quiets the resistance first if needed.',
+        'This is exactly what the Placemat Process is for. Write down everything on your plate, keep only what\'s truly yours, and let the Universe handle the rest. Meditation can quiet the noise first.',
       tools: [
-        { screen: 'Meditation',       label: 'Meditation',      emoji: '🧘' },
-        { screen: 'SixtyEightSecond', label: '68-Second Focus', emoji: '⏱️' },
-        { screen: 'FocusWheel',       label: 'Focus Wheel',     emoji: '🎯' },
+        { screen: 'Meditation',       label: 'Meditation',       emoji: '🧘' },
+        { screen: 'Placemat',         label: 'Placemat Process', emoji: '🍽️' },
+        { screen: 'SixtyEightSecond', label: '68-Second Focus',  emoji: '⏱️' },
+        { screen: 'FocusWheel',       label: 'Focus Wheel',      emoji: '🎯' },
       ],
     };
   }
@@ -121,13 +140,22 @@ function getRecommendation(level: number): Recommendation {
   };
 }
 
-const PANEL_OFFSET = 320;
+const PANEL_OFFSET = 390;
 
 export default function EmotionalGuidanceScaleScreen() {
   const navigation = useNavigation<Nav>();
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const panelAnim = useRef(new Animated.Value(PANEL_OFFSET)).current;
   const isPanelVisible = useRef(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 8,
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 40) hidePanel();
+      },
+    })
+  ).current;
 
   const showPanel = () => {
     isPanelVisible.current = true;
@@ -149,12 +177,15 @@ export default function EmotionalGuidanceScaleScreen() {
   };
 
   const handleSelect = (level: number) => {
-    if (selectedLevel === level) {
-      hidePanel(() => setSelectedLevel(null));
-    } else if (!isPanelVisible.current) {
+    if (!isPanelVisible.current) {
+      // Panel is closed — open it (re-selecting same or picking new)
       setSelectedLevel(level);
       showPanel();
+    } else if (selectedLevel === level) {
+      // Tapping the active emotion while panel is open → close only
+      hidePanel();
     } else {
+      // Different emotion while panel is open → switch
       setSelectedLevel(level);
     }
   };
@@ -162,11 +193,24 @@ export default function EmotionalGuidanceScaleScreen() {
   const recommendation = selectedLevel ? getRecommendation(selectedLevel) : null;
   const selectedColor = selectedLevel ? EMOTIONS[selectedLevel - 1].color : '#7B4FA6';
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // Reset panel when leaving this screen so the overlay doesn't block
+        // the header on return.
+        isPanelVisible.current = false;
+        panelAnim.setValue(PANEL_OFFSET);
+        setSelectedLevel(null);
+      };
+    }, [panelAnim])
+  );
+
   const navigateTo = (screen: ToolScreen) => {
     if (screen === 'Book') navigation.navigate('Book');
     else if (screen === 'FocusWheel') navigation.navigate('FocusWheel');
     else if (screen === 'SixtyEightSecond') navigation.navigate('SixtyEightSecond');
     else if (screen === 'CreativeWorkshop') navigation.navigate('CreativeWorkshop');
+    else if (screen === 'Placemat') navigation.navigate('Placemat');
     else navigation.navigate('Meditation');
   };
 
@@ -228,11 +272,26 @@ export default function EmotionalGuidanceScaleScreen() {
           })}
         </ScrollView>
 
+        {/* Tap-away overlay */}
+        {selectedLevel !== null && (
+          <TouchableOpacity
+            style={styles.overlay}
+            activeOpacity={1}
+            onPress={() => hidePanel()}
+          />
+        )}
+
         {/* Sliding recommendation panel */}
         <Animated.View
           style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}
         >
           <View style={[styles.panelStripe, { backgroundColor: selectedColor }]} />
+
+          {/* Drag handle */}
+          <View style={styles.handleZone} {...panResponder.panHandlers}>
+            <View style={styles.handle} />
+          </View>
+
           {recommendation && (
             <>
               <Text style={styles.panelTitle}>{recommendation.title}</Text>
@@ -241,7 +300,7 @@ export default function EmotionalGuidanceScaleScreen() {
                 {recommendation.tools.map((tool) => (
                   <TouchableOpacity
                     key={tool.screen}
-                    style={styles.toolBtn}
+                    style={[styles.toolBtn, { flexBasis: recommendation.tools.length >= 5 ? '30%' : '47%' }]}
                     onPress={() => navigateTo(tool.screen)}
                     activeOpacity={0.8}
                   >
@@ -331,7 +390,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A0A2E',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingTop: 24,
+    paddingTop: 0,
     paddingBottom: 36,
     paddingHorizontal: 24,
     shadowColor: '#000',
@@ -363,10 +422,11 @@ const styles = StyleSheet.create({
   },
   toolRow: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 10,
   },
   toolBtn: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: 'rgba(123, 79, 166, 0.3)',
     borderRadius: 16,
     borderWidth: 1,
@@ -374,6 +434,21 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     gap: 4,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+  },
+  handleZone: {
+    alignItems: 'center',
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(176, 138, 212, 0.35)',
   },
   tippingPoint: {
     flexDirection: 'row',

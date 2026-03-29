@@ -194,10 +194,14 @@ export default function SixtyEightSecondScreen() {
                   reached && state !== 'idle' && { backgroundColor: p.color, borderColor: p.color },
                   active && styles.milestoneDotActive,
                 ]} />
-                <Text style={[
-                  styles.milestoneLabel,
-                  reached && state !== 'idle' && { color: p.color },
-                ]}>
+                <Text
+                  style={[
+                    styles.milestoneLabel,
+                    reached && state !== 'idle' && { color: p.color },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {p.label}
                 </Text>
                 <Text style={styles.milestoneSec}>{i * 17 + 17}s</Text>
@@ -295,14 +299,16 @@ const styles = StyleSheet.create({
   },
   milestones: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
     marginTop: 20,
     marginBottom: 8,
   },
   milestone: {
+    flex: 1,
     alignItems: 'center',
     gap: 6,
+    paddingHorizontal: 4,
   },
   milestoneDot: {
     width: 10,
@@ -318,13 +324,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   milestoneLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#B08AD4',
     fontFamily: 'Nunito_700Bold',
     textAlign: 'center',
   },
   milestoneSec: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#9B72CC',
     fontFamily: 'Nunito_400Regular',
   },

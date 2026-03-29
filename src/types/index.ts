@@ -51,6 +51,19 @@ export type WorkshopArchiveEntry = {
   items: WantItem[];
 };
 
+export type PlacematItem = {
+  id: string;
+  text: string;
+  list: 'inbox' | 'mine' | 'universe';
+  done: boolean;
+};
+
+export type Placemat = {
+  id: string;
+  items: PlacematItem[];
+  createdAt: string;
+};
+
 export type Workshop = {
   body: WantItem[];
   home: WantItem[];

@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Alert,
   KeyboardAvoidingView,
-  Keyboard,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,7 +16,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import BulletRow from '../components/BulletRow';
-import { saveEntry, updateEntry } from '../storage/entriesStorage';
+import { saveEntry, updateEntry, deleteEntry } from '../storage/entriesStorage';
 import { Entry, BulletItem } from '../types';
 
 type Nav = StackNavigationProp<RootStackParamList, 'CreateEntry'>;
@@ -44,6 +43,35 @@ export default function CreateEntryScreen() {
   const [newBulletId, setNewBulletId] = useState<string | null>(null);
   const firstBulletRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Stable ID for this editing session
+  const entryIdRef = useRef<string>(existingEntry?.id ?? makeId());
+  // True once the entry exists in storage (always true when editing an existing entry)
+  const hasPersistedRef = useRef<boolean>(!!existingEntry);
+
+  // Auto-save to real storage as user types
+  useEffect(() => {
+    const hasContent = topic.trim() || bullets.some((b) => b.text.trim());
+    if (!hasContent) return;
+
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      const entry: Entry = {
+        id: entryIdRef.current,
+        topic: topic.trim() || 'Untitled',
+        bullets: bullets.filter((b) => b.text.trim()),
+        createdAt: existingEntry?.createdAt ?? new Date().toISOString(),
+      };
+      if (!hasPersistedRef.current) {
+        await saveEntry(entry);
+        hasPersistedRef.current = true;
+      } else {
+        await updateEntry(entry);
+      }
+    }, 600);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, [topic, bullets]);
 
   useEffect(() => {
     if (newBulletId) setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
@@ -51,10 +79,7 @@ export default function CreateEntryScreen() {
 
   const addBullet = useCallback(() => {
     const id = makeId();
-    setBullets((prev) => [
-      ...prev,
-      { id, emoji: randomEmoji(), text: '' },
-    ]);
+    setBullets((prev) => [...prev, { id, emoji: randomEmoji(), text: '' }]);
     setNewBulletId(id);
   }, []);
 
@@ -63,39 +88,14 @@ export default function CreateEntryScreen() {
   }, []);
 
   const deleteBullet = useCallback((id: string) => {
-    setBullets((prev) => {
-      const next = prev.filter((b) => b.id !== id);
-      return next.map((b, i) => ({
-        ...b,
-        emoji: b.emoji,
-      }));
-    });
+    setBullets((prev) => prev.filter((b) => b.id !== id));
   }, []);
 
-  const handleSave = async () => {
-    if (!topic.trim()) {
-      Alert.alert('Topic required', 'Please enter a topic for this entry.');
-      return;
-    }
-    const filledBullets = bullets.filter((b) => b.text.trim());
-    if (filledBullets.length === 0) {
-      Alert.alert('Nothing to save', 'Add at least one positive aspect.');
-      return;
-    }
-
+  const handleDone = () => {
     if (existingEntry) {
-      const updated: Entry = { ...existingEntry, topic: topic.trim(), bullets: filledBullets };
-      await updateEntry(updated);
       navigation.navigate('Book', { jumpToId: existingEntry.id });
     } else {
-      const entry: Entry = {
-        id: makeId(),
-        topic: topic.trim(),
-        bullets: filledBullets,
-        createdAt: new Date().toISOString(),
-      };
-      await saveEntry(entry);
-      navigation.navigate('Book', { jumpToId: entry.id });
+      navigation.navigate('Book');
     }
   };
 
@@ -114,9 +114,7 @@ export default function CreateEntryScreen() {
             <Text style={styles.headerTitle}>
               {existingEntry ? 'Edit Entry' : 'New Entry'}
             </Text>
-            <TouchableOpacity onPress={() => Keyboard.dismiss()} style={styles.doneBtn}>
-              <Text style={styles.doneBtnText}>Done</Text>
-            </TouchableOpacity>
+            <View style={{ width: 80 }} />
           </View>
 
           <ScrollView
@@ -127,7 +125,6 @@ export default function CreateEntryScreen() {
           >
             {/* Journal page */}
             <View style={styles.page}>
-              {/* Topic */}
               <TextInput
                 style={styles.topicInput}
                 value={topic}
@@ -141,7 +138,6 @@ export default function CreateEntryScreen() {
               />
               <View style={styles.topicDivider} />
 
-              {/* Bullets */}
               {bullets.map((bullet, index) => (
                 <BulletRow
                   key={bullet.id}
@@ -154,17 +150,46 @@ export default function CreateEntryScreen() {
                 />
               ))}
 
-              {/* Add another */}
               <TouchableOpacity style={styles.addRow} onPress={addBullet}>
                 <Text style={styles.addPlus}>＋</Text>
                 <Text style={styles.addText}>Add another</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Save */}
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-              <Text style={styles.saveBtnText}>Save to My Book  💾</Text>
+            <TouchableOpacity style={styles.saveBtn} onPress={handleDone}>
+              <Text style={styles.saveBtnText}>Done (for now)  ✨</Text>
             </TouchableOpacity>
+
+            {/* Only show for new entries with content */}
+            {!existingEntry && (topic.trim() !== '' || bullets.some((b) => b.text.trim() !== '')) && (
+              <TouchableOpacity
+                style={styles.clearBtn}
+                onPress={() => {
+                  Alert.alert(
+                    'Clear and start over?',
+                    'This will erase everything on this page.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Clear',
+                        style: 'destructive',
+                        onPress: async () => {
+                          if (hasPersistedRef.current) {
+                            await deleteEntry(entryIdRef.current);
+                            hasPersistedRef.current = false;
+                          }
+                          entryIdRef.current = makeId();
+                          setTopic('');
+                          setBullets([{ id: makeId(), emoji: randomEmoji(), text: '' }]);
+                        },
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Text style={styles.clearBtnText}>Clear and Start Over</Text>
+              </TouchableOpacity>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -184,9 +209,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 8,
   },
-  backBtn:   { padding: 8, width: 80 },
-  doneBtn:   { padding: 8, width: 80, alignItems: 'flex-end' },
-  doneBtnText: { fontSize: 17, color: '#7B4FA6', fontFamily: 'Nunito_700Bold' },
+  backBtn: { padding: 8, width: 80 },
   backText: { fontSize: 20, color: '#7B4FA6', fontFamily: 'Nunito_700Bold' },
   headerTitle: { fontSize: 20, color: '#4A3060', fontFamily: 'Pacifico_400Regular' },
   scroll: {
@@ -252,5 +275,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 19,
     fontFamily: 'Nunito_700Bold',
+  },
+  clearBtn: {
+    alignSelf: 'center',
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+  },
+  clearBtnText: {
+    fontSize: 15,
+    color: '#A080C0',
+    fontFamily: 'Nunito_400Regular',
+    textDecorationLine: 'underline',
   },
 });

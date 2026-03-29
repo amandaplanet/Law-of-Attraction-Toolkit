@@ -10,6 +10,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { AudioContext, AudioBuffer } from 'react-native-audio-api';
 import { Asset } from 'expo-asset';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setNowPlaying, clearNowPlaying } from '../modules/NowPlaying';
+
+const PREFS_MINS_KEY  = '@meditation_mins';
+const PREFS_SOUND_KEY = '@meditation_sound';
 
 const ALARM_SOURCE = require('../../assets/sounds/abraham-alarm.wav');
 
@@ -45,6 +50,18 @@ export default function MeditationScreen() {
   const isRunningRef    = useRef(false);
   const pulseAnim       = useRef(new Animated.Value(1)).current;
   const pulseLoopRef    = useRef<Animated.CompositeAnimation | null>(null);
+
+  // Load saved preferences
+  useEffect(() => {
+    AsyncStorage.multiGet([PREFS_MINS_KEY, PREFS_SOUND_KEY]).then(([[, mins], [, sound]]) => {
+      if (mins) {
+        const m = parseInt(mins, 10);
+        setSelectedMins(m);
+        setSecondsLeft(m * 60);
+      }
+      if (sound) setSelectedSound(sound as SoundKey);
+    });
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -173,18 +190,23 @@ export default function MeditationScreen() {
     setTimerState('running');
     await startAudio(selectedSound);
     startPulse();
+    setNowPlaying({ title: `Meditation · ${selectedMins} min`, elapsed: 0, duration: secs, rate: 1.0 });
   };
 
   const handlePause = () => {
     setTimerState('paused');
     stopPulse();
     pauseAudio();
+    const elapsed = selectedMins * 60 - secondsLeft;
+    setNowPlaying({ title: `Meditation · ${selectedMins} min`, elapsed, duration: selectedMins * 60, rate: 0.0 });
   };
 
   const handleResume = () => {
     setTimerState('running');
     resumeAudio();
     startPulse();
+    const elapsed = selectedMins * 60 - secondsLeft;
+    setNowPlaying({ title: `Meditation · ${selectedMins} min`, elapsed, duration: selectedMins * 60, rate: 1.0 });
   };
 
   const handleStop = () => {
@@ -192,6 +214,7 @@ export default function MeditationScreen() {
     setSecondsLeft(selectedMins * 60);
     stopPulse();
     stopAudio();
+    clearNowPlaying();
   };
 
   const finishSession = () => {
@@ -199,11 +222,13 @@ export default function MeditationScreen() {
     stopPulse();
     stopAudio();
     playAlarm();
+    clearNowPlaying();
   };
 
   const handleSelectDuration = (mins: number) => {
     setSelectedMins(mins);
     setSecondsLeft(mins * 60);
+    AsyncStorage.setItem(PREFS_MINS_KEY, String(mins));
     if (timerState === 'running' || timerState === 'paused') {
       setTimerState('running');
       if (timerState === 'paused') {
@@ -215,6 +240,7 @@ export default function MeditationScreen() {
 
   const handleSelectSound = async (soundKey: SoundKey) => {
     setSelectedSound(soundKey);
+    AsyncStorage.setItem(PREFS_SOUND_KEY, soundKey);
     if (timerState === 'running' || timerState === 'paused') {
       stopAudio();
       await startAudio(soundKey);

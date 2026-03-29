@@ -39,7 +39,8 @@
     },
     "plugins": [
       "expo-font",
-      "react-native-audio-api"
+      "react-native-audio-api",
+      "./plugins/withNowPlaying"
     ],
     "extra": {
       "eas": {

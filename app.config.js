@@ -6,5 +6,11 @@ module.exports = {
   expo: {
     ...appJson.expo,
     name: IS_DEV ? 'LoA Toolkit (Dev)' : appJson.expo.name,
+    ios: {
+      ...appJson.expo.ios,
+      bundleIdentifier: IS_DEV
+        ? 'com.amandaplanet.AbrahamHicksToolkit.dev'
+        : appJson.expo.ios.bundleIdentifier,
+    },
   },
 };

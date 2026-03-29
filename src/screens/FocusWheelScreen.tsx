@@ -32,6 +32,8 @@ export default function FocusWheelScreen() {
   const centerInputRef = useRef<TextInput>(null);
   const inputRefs = useRef<Array<TextInput | null>>(new Array(12).fill(null));
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pageYOffset = useRef(0);
+  const spokeYOffsets = useRef<number[]>(new Array(12).fill(0));
 
   // Load draft on focus
   useFocusEffect(useCallback(() => {
@@ -76,8 +78,8 @@ export default function FocusWheelScreen() {
   }, [updateSpoke, scrollToSpoke]);
 
   const scrollToSpoke = useCallback((i: number) => {
-    // Approx: wheel ~300px + page top padding ~20 + center section ~100 + label ~20 + spoke rows
-    scrollRef.current?.scrollTo({ y: 440 + i * 52, animated: true });
+    const y = pageYOffset.current + spokeYOffsets.current[i];
+    scrollRef.current?.scrollTo({ y, animated: true });
   }, []);
 
   const handleSpokePress = useCallback((i: number) => {
@@ -105,21 +107,15 @@ export default function FocusWheelScreen() {
   const filledCount = wheel.spokes.filter((s) => s.text.trim()).length;
 
   const spinAnim = useRef(new Animated.Value(0)).current;
-  const [isSpinning, setIsSpinning] = useState(false);
 
   const handleSpin = () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
     spinAnim.setValue(0);
     Animated.timing(spinAnim, {
       toValue: 1,
       duration: 2400,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
-    }).start(() => {
-      spinAnim.setValue(0);
-      setIsSpinning(false);
-    });
+    }).start();
   };
 
   const spinRotation = spinAnim.interpolate({
@@ -170,9 +166,8 @@ export default function FocusWheelScreen() {
               </Text>
               {filledCount === 12 && (
                 <TouchableOpacity
-                  style={[styles.spinBtn, isSpinning && { opacity: 0.5 }]}
+                  style={styles.spinBtn}
                   onPress={handleSpin}
-                  disabled={isSpinning}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.spinBtnText}>Spin 🌀</Text>
@@ -180,7 +175,7 @@ export default function FocusWheelScreen() {
               )}
             </View>
             {/* Center statement */}
-            <View style={styles.page}>
+            <View style={styles.page} onLayout={(e) => { pageYOffset.current = e.nativeEvent.layout.y; }}>
               <Text style={styles.sectionLabel}>Center Statement</Text>
               <Text style={styles.sectionHint}>
                 Write something you want to feel or believe — something just slightly out of reach. For example: "I am healthy and full of energy" or "I have financial freedom."
@@ -214,6 +209,7 @@ export default function FocusWheelScreen() {
                   <View
                     key={i}
                     style={[styles.spokeRow, active && styles.spokeRowActive]}
+                    onLayout={(e) => { spokeYOffsets.current[i] = e.nativeEvent.layout.y; }}
                   >
                     <View
                       style={[
