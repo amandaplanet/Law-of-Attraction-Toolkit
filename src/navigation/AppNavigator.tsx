@@ -16,6 +16,8 @@ import CreativeWorkshopWantScreen from '../screens/CreativeWorkshopWantScreen';
 import CreativeWorkshopArchiveScreen from '../screens/CreativeWorkshopArchiveScreen';
 import PlacematScreen from '../screens/PlacematScreen';
 import PlacematArchiveScreen from '../screens/PlacematArchiveScreen';
+import PivotScreen from '../screens/PivotScreen';
+import PivotArchiveScreen from '../screens/PivotArchiveScreen';
 import { Entry } from '../types';
 
 export type RootStackParamList = {
@@ -34,6 +36,8 @@ export type RootStackParamList = {
   CreativeWorkshopArchive: undefined;
   Placemat: undefined;
   PlacematArchive: undefined;
+  Pivot: undefined;
+  PivotArchive: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -57,6 +61,8 @@ export default function AppNavigator() {
         <Stack.Screen name="CreativeWorkshopArchive" component={CreativeWorkshopArchiveScreen} />
         <Stack.Screen name="Placemat" component={PlacematScreen} />
         <Stack.Screen name="PlacematArchive" component={PlacematArchiveScreen} />
+        <Stack.Screen name="Pivot" component={PivotScreen} />
+        <Stack.Screen name="PivotArchive" component={PivotArchiveScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

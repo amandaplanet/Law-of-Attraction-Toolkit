@@ -131,6 +131,21 @@ export default function HomeScreen() {
               </View>
               <Text style={styles.cardArrow}>›</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate('Pivot')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.cardEmoji}>🔄</Text>
+              <View style={styles.cardText}>
+                <Text style={styles.cardTitle}>Pivoting</Text>
+                <Text style={styles.cardDesc}>
+                  Turn "I don't want this" into "what I DO want instead"
+                </Text>
+              </View>
+              <Text style={styles.cardArrow}>›</Text>
+            </TouchableOpacity>
           </ScrollView>
 
           <View style={styles.footerRow}>

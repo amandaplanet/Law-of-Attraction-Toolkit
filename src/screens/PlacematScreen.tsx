@@ -232,7 +232,19 @@ export default function PlacematScreen() {
                   <Text style={[styles.checkedText, item.done && styles.doneText]}>{item.text}</Text>
                   <TouchableOpacity
                     style={[styles.moveBtn, { borderColor: '#7B4FA6' }]}
-                    onPress={() => moveTo(item.id, 'mine')}
+                    onPress={() => {
+                      Alert.alert(
+                        'Reassign to yourself?',
+                        'If you feel inspired to take action on this, reassign it to yourself.',
+                        [
+                          { text: 'Leave it to the Universe', style: 'cancel' },
+                          {
+                            text: "I'm inspired to do this today",
+                            onPress: () => moveTo(item.id, 'mine'),
+                          },
+                        ]
+                      );
+                    }}
                   >
                     <Text style={[styles.moveBtnText, { color: '#7B4FA6' }]}>→ ✋</Text>
                   </TouchableOpacity>

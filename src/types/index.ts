@@ -51,6 +51,13 @@ export type WorkshopArchiveEntry = {
   items: WantItem[];
 };
 
+export type PivotEntry = {
+  id: string;
+  dontWant: string;   // may be empty — field is optional
+  doWants: string[];  // filled statements only
+  createdAt: string;
+};
+
 export type PlacematItem = {
   id: string;
   text: string;

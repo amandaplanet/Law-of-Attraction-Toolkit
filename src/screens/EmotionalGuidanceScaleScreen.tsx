@@ -14,7 +14,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
 type Nav = StackNavigationProp<RootStackParamList>;
-type ToolScreen = 'Book' | 'FocusWheel' | 'Meditation' | 'SixtyEightSecond' | 'CreativeWorkshop' | 'Placemat';
+type ToolScreen = 'Book' | 'FocusWheel' | 'Meditation' | 'SixtyEightSecond' | 'CreativeWorkshop' | 'Placemat' | 'Pivot';
 
 type Tool = { screen: ToolScreen; label: string; emoji: string };
 type Recommendation = { title: string; message: string; tools: Tool[] };
@@ -96,9 +96,10 @@ function getRecommendation(level: number): Recommendation {
     return {
       title: 'Great energy to work with 🌈',
       message:
-        'You have access to the full toolkit. The Placemat Process is great here — hand off what feels heavy so you can focus on what\'s truly yours. The Focus Wheel can build more momentum.',
+        'You have access to the full toolkit. Try Pivoting to redirect any resistant thoughts toward what you want instead. The Placemat can hand off what feels heavy, and the Focus Wheel builds momentum.',
       tools: [
         { screen: 'Meditation',       label: 'Meditation',               emoji: '🧘' },
+        { screen: 'Pivot',            label: 'Pivoting',                 emoji: '🔄' },
         { screen: 'Placemat',         label: 'Placemat Process',         emoji: '🍽️' },
         { screen: 'SixtyEightSecond', label: '68-Second Focus',          emoji: '⏱️' },
         { screen: 'Book',             label: 'Book of Positive Aspects', emoji: '📖' },
@@ -110,11 +111,11 @@ function getRecommendation(level: number): Recommendation {
     return {
       title: 'Feeling overwhelmed? Hand it off. 🌿',
       message:
-        'This is exactly what the Placemat Process is for. Write down everything on your plate, keep only what\'s truly yours, and let the Universe handle the rest. Meditation can quiet the noise first.',
+        'The Placemat Process helps you put down what isn\'t yours. Pivoting can redirect any specific thought you\'re stuck on. Meditation quiets the noise so the shift feels possible.',
       tools: [
         { screen: 'Meditation',       label: 'Meditation',       emoji: '🧘' },
+        { screen: 'Pivot',            label: 'Pivoting',         emoji: '🔄' },
         { screen: 'Placemat',         label: 'Placemat Process', emoji: '🍽️' },
-        { screen: 'SixtyEightSecond', label: '68-Second Focus',  emoji: '⏱️' },
         { screen: 'FocusWheel',       label: 'Focus Wheel',      emoji: '🎯' },
       ],
     };
@@ -123,9 +124,10 @@ function getRecommendation(level: number): Recommendation {
     return {
       title: 'Reach for relief 🌬️',
       message:
-        'The Focus Wheel is your best tool here — use stepping-stone thoughts to gently move up the scale. Meditation helps quiet resistance so the shift feels easier.',
+        'Pivoting is powerful here — notice the unwanted thought and ask "what do I want instead?" The Focus Wheel can then build momentum toward it. Meditation helps quiet resistance so the shift feels easier.',
       tools: [
         { screen: 'Meditation', label: 'Meditation',  emoji: '🧘' },
+        { screen: 'Pivot',      label: 'Pivoting',    emoji: '🔄' },
         { screen: 'FocusWheel', label: 'Focus Wheel', emoji: '🎯' },
       ],
     };
@@ -205,6 +207,7 @@ export default function EmotionalGuidanceScaleScreen() {
     else if (screen === 'SixtyEightSecond') navigation.navigate('SixtyEightSecond');
     else if (screen === 'CreativeWorkshop') navigation.navigate('CreativeWorkshop');
     else if (screen === 'Placemat') navigation.navigate('Placemat');
+    else if (screen === 'Pivot') navigation.navigate('Pivot');
     else navigation.navigate('Meditation');
   };
 
