@@ -12,6 +12,7 @@ import { AudioContext, AudioBuffer } from 'react-native-audio-api';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setNowPlaying, clearNowPlaying } from '../modules/NowPlaying';
+import { usePostHog } from 'posthog-react-native';
 
 const PREFS_MINS_KEY  = '@meditation_mins';
 const PREFS_SOUND_KEY = '@meditation_sound';
@@ -39,6 +40,7 @@ function fmt(secs: number): string {
 
 export default function MeditationScreen() {
   const navigation = useNavigation();
+  const posthog = usePostHog();
   const [selectedMins,  setSelectedMins]  = useState(15);
   const [selectedSound, setSelectedSound] = useState<SoundKey>('white');
   const [timerState,    setTimerState]    = useState<TimerState>('idle');
@@ -223,6 +225,10 @@ export default function MeditationScreen() {
     stopAudio();
     playAlarm();
     clearNowPlaying();
+    posthog.capture('meditation_completed', {
+      duration_minutes: selectedMins,
+      sound: selectedSound,
+    });
   };
 
   const handleSelectDuration = (mins: number) => {

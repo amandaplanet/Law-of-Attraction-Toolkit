@@ -20,11 +20,13 @@ import { FocusWheel } from '../types';
 import {
   getDraft, saveDraft, archiveWheel, makeEmptyWheel,
 } from '../storage/focusWheelStorage';
+import { usePostHog } from 'posthog-react-native';
 
 type Nav = StackNavigationProp<RootStackParamList, 'FocusWheel'>;
 
 export default function FocusWheelScreen() {
   const navigation = useNavigation<Nav>();
+  const posthog = usePostHog();
   const [wheel, setWheel] = useState<FocusWheel>(makeEmptyWheel());
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -99,6 +101,7 @@ export default function FocusWheelScreen() {
       return;
     }
     await archiveWheel(wheel);
+    posthog.capture('session_archived', { tool: 'focus_wheel' });
     setWheel(makeEmptyWheel());
     setActiveIndex(null);
     scrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -109,6 +112,7 @@ export default function FocusWheelScreen() {
   const spinAnim = useRef(new Animated.Value(0)).current;
 
   const handleSpin = () => {
+    posthog.capture('focus_wheel_spun');
     spinAnim.setValue(0);
     Animated.timing(spinAnim, {
       toValue: 1,
@@ -184,15 +188,20 @@ export default function FocusWheelScreen() {
                 ref={centerInputRef}
                 style={styles.centerInput}
                 value={wheel.centerStatement}
-                onChangeText={updateCenter}
+                onChangeText={(t) => {
+                  if (t.includes('\n')) {
+                    updateCenter(t.replace(/\n/g, ''));
+                    inputRefs.current[0]?.focus();
+                    setActiveIndex(0);
+                  } else {
+                    updateCenter(t);
+                  }
+                }}
                 placeholder="I am… / I have… / I love…"
                 placeholderTextColor="#C9A8E0"
+                multiline
                 onFocus={() => setActiveIndex(null)}
-                returnKeyType="next"
-                onSubmitEditing={() => {
-                  inputRefs.current[0]?.focus();
-                  setActiveIndex(0);
-                }}
+                blurOnSubmit={false}
               />
 
               <View style={styles.divider} />

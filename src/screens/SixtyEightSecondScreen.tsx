@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
+import { usePostHog } from 'posthog-react-native';
 
 // ─── Arc geometry ────────────────────────────────────────────────────────────
 const SVG_SIZE  = 280;
@@ -47,6 +48,7 @@ type TimerState = 'idle' | 'running' | 'done';
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function SixtyEightSecondScreen() {
   const navigation   = useNavigation();
+  const posthog = usePostHog();
   const [state, setState]   = useState<TimerState>('idle');
   const [elapsed, setElapsed] = useState(0);
   const prevPhaseRef = useRef(-1);
@@ -71,6 +73,7 @@ export default function SixtyEightSecondScreen() {
   useEffect(() => {
     if (state === 'running' && elapsed >= 68) {
       setState('done');
+      posthog.capture('sixty_eight_second_completed');
     }
   }, [elapsed, state]);
 

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { usePostHog } from 'posthog-react-native';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 type ToolScreen = 'Book' | 'FocusWheel' | 'Meditation' | 'SixtyEightSecond' | 'CreativeWorkshop' | 'Placemat' | 'Pivot';
@@ -146,9 +147,13 @@ const PANEL_OFFSET = 390;
 
 export default function EmotionalGuidanceScaleScreen() {
   const navigation = useNavigation<Nav>();
+  const posthog = usePostHog();
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const panelAnim = useRef(new Animated.Value(PANEL_OFFSET)).current;
   const isPanelVisible = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const rowOffsets = useRef<number[]>([]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -164,6 +169,7 @@ export default function EmotionalGuidanceScaleScreen() {
 
   const showPanel = () => {
     isPanelVisible.current = true;
+    setIsPanelOpen(true);
     Animated.spring(panelAnim, {
       toValue: 0,
       tension: 60,
@@ -180,21 +186,28 @@ export default function EmotionalGuidanceScaleScreen() {
       useNativeDriver: true,
     }).start(() => {
       setSelectedLevel(null);
+      setIsPanelOpen(false);
       onDone?.();
     });
   };
 
+  const scrollToRow = (level: number) => {
+    const rowY = rowOffsets.current[level - 1] ?? 0;
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, rowY - 60), animated: true });
+    }, 50);
+  };
+
   const handleSelect = (level: number) => {
     if (!isPanelVisible.current) {
-      // Panel is closed — open it (re-selecting same or picking new)
       setSelectedLevel(level);
       showPanel();
+      scrollToRow(level);
     } else if (selectedLevel === level) {
-      // Tapping the active emotion while panel is open → close only
       hidePanel();
     } else {
-      // Different emotion while panel is open → switch
       setSelectedLevel(level);
+      scrollToRow(level);
     }
   };
 
@@ -202,6 +215,12 @@ export default function EmotionalGuidanceScaleScreen() {
   const selectedColor = selectedLevel ? EMOTIONS[selectedLevel - 1].color : '#7B4FA6';
 
   const navigateTo = (screen: ToolScreen) => {
+    posthog.capture('tool_opened', {
+      tool: screen,
+      source: 'emotional_scale',
+      emotion_level: selectedLevel,
+      emotion_label: selectedLevel ? EMOTIONS[selectedLevel - 1].label : undefined,
+    });
     if (screen === 'Book') navigation.navigate('Book');
     else if (screen === 'FocusWheel') navigation.navigate('FocusWheel');
     else if (screen === 'SixtyEightSecond') navigation.navigate('SixtyEightSecond');
@@ -226,6 +245,7 @@ export default function EmotionalGuidanceScaleScreen() {
         <Text style={styles.subtitle}>Where are you right now?</Text>
 
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[
             styles.listContent,
             selectedLevel !== null && { paddingBottom: PANEL_OFFSET + 20 },
@@ -252,6 +272,7 @@ export default function EmotionalGuidanceScaleScreen() {
                   },
                 ]}
                 onPress={() => handleSelect(emotion.level)}
+                onLayout={(e) => { rowOffsets.current[emotion.level - 1] = e.nativeEvent.layout.y; }}
                 activeOpacity={1}
               >
                 <View style={[styles.levelBadge, { backgroundColor: emotion.color }]}>
@@ -272,6 +293,7 @@ export default function EmotionalGuidanceScaleScreen() {
         {/* Sliding recommendation panel */}
         <Animated.View
           style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}
+          pointerEvents={isPanelOpen ? 'auto' : 'none'}
         >
           {/* Swipe zone: stripe + handle + title + message all dismiss on swipe/tap */}
           <View {...panResponder.panHandlers}>

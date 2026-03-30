@@ -17,6 +17,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { PlacematItem, Placemat } from '../types';
 import { getDraft, saveDraft, archivePlacemat, makeEmptyPlacemat } from '../storage/placematStorage';
+import { usePostHog } from 'posthog-react-native';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 
@@ -26,6 +27,7 @@ function makeId() {
 
 export default function PlacematScreen() {
   const navigation = useNavigation<Nav>();
+  const posthog = usePostHog();
   const [placemat, setPlacemat] = useState<Placemat>(makeEmptyPlacemat());
   const [newItemText, setNewItemText] = useState('');
   const addInputRef = useRef<TextInput>(null);
@@ -85,6 +87,7 @@ export default function PlacematScreen() {
           text: 'Archive',
           onPress: async () => {
             await archivePlacemat(placemat);
+            posthog.capture('session_archived', { tool: 'placemat' });
             setPlacemat(makeEmptyPlacemat());
           },
         },

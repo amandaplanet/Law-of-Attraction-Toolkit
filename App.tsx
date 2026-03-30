@@ -9,6 +9,7 @@ import {
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PostHogProvider } from 'posthog-react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
@@ -27,12 +28,17 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <StatusBar style="dark" />
-        <AppNavigator />
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <PostHogProvider
+      apiKey={process.env.EXPO_PUBLIC_POSTHOG_API_KEY!}
+      options={{ host: process.env.EXPO_PUBLIC_POSTHOG_HOST }}
+    >
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <StatusBar style="dark" />
+          <AppNavigator />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </PostHogProvider>
   );
 }
 

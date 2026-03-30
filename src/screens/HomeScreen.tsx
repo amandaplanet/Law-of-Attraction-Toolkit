@@ -12,11 +12,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { usePostHog } from 'posthog-react-native';
 
 type Nav = StackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
+  const posthog = usePostHog();
   const [aboutVisible, setAboutVisible] = useState(false);
 
   return (
@@ -44,7 +46,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate('Meditation')}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Meditation', source: 'home' }); navigation.navigate('Meditation'); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>🧘</Text>
@@ -59,7 +61,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate('SixtyEightSecond')}
+              onPress={() => { posthog.capture('tool_opened', { tool: '68-Second Focus', source: 'home' }); navigation.navigate('SixtyEightSecond'); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>⏱️</Text>
@@ -74,7 +76,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate('Book')}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Book of Positive Aspects', source: 'home' }); navigation.navigate('Book'); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>📖</Text>
@@ -89,7 +91,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate('FocusWheel')}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Focus Wheel', source: 'home' }); navigation.navigate('FocusWheel'); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>🎯</Text>
@@ -104,7 +106,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate('CreativeWorkshop')}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Creative Workshop', source: 'home' }); navigation.navigate('CreativeWorkshop'); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>🎨</Text>
@@ -119,7 +121,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate('Placemat')}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Placemat Process', source: 'home' }); navigation.navigate('Placemat'); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>🍽️</Text>
@@ -134,7 +136,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate('Pivot')}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Pivoting', source: 'home' }); navigation.navigate('Pivot'); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>🔄</Text>

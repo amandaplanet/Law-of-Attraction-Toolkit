@@ -17,11 +17,13 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import {
   getPivotDraft, savePivotDraft, archivePivot, getArchivedPivots,
 } from '../storage/pivotStorage';
+import { usePostHog } from 'posthog-react-native';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 
 export default function PivotScreen() {
   const navigation = useNavigation<Nav>();
+  const posthog = usePostHog();
 
   const [dontWant, setDontWant]   = useState('');
   const [doWants,  setDoWants]    = useState<string[]>(['']);
@@ -96,6 +98,7 @@ export default function PivotScreen() {
           text: 'Archive',
           onPress: async () => {
             await archivePivot({ dontWant: dontWant.trim(), doWants: filledWants });
+            posthog.capture('session_archived', { tool: 'pivot' });
             setDontWant('');
             setDoWants(['']);
             setHasArchive(true);
