@@ -31,6 +31,7 @@ export default function App() {
     <PostHogProvider
       apiKey={process.env.EXPO_PUBLIC_POSTHOG_API_KEY!}
       options={{ host: process.env.EXPO_PUBLIC_POSTHOG_HOST }}
+      autocapture={{ captureScreens: false }}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
