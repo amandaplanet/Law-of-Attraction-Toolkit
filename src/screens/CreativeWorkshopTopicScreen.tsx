@@ -45,7 +45,15 @@ export default function CreativeWorkshopTopicScreen() {
   const [editingWantText, setEditingWantText] = useState('');
   const editInputRef = useRef<TextInput>(null);
 
+  // Inline reason editing (key = `${wantId}-${index}`)
+  const [editingReasonKey,  setEditingReasonKey]  = useState<string | null>(null);
+  const [editingReasonText, setEditingReasonText] = useState('');
+  const editReasonInputRef = useRef<TextInput>(null);
+
   const scrollRef = useRef<ScrollView>(null);
+  const cardYOffsets = useRef<Record<string, number>>({});
+  const cardHeights = useRef<Record<string, number>>({});
+  const addingWantRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -62,7 +70,8 @@ export default function CreativeWorkshopTopicScreen() {
   }, [showAddWant]);
 
   useEffect(() => {
-    if (addingReasonFor) setTimeout(() => reasonInputRef.current?.focus(), 80);
+    if (!addingReasonFor) return;
+    setTimeout(() => reasonInputRef.current?.focus(), 80);
   }, [addingReasonFor]);
 
   useEffect(() => {
@@ -72,8 +81,10 @@ export default function CreativeWorkshopTopicScreen() {
   // ── Want actions ────────────────────────────────────────────────────────────
 
   const handleAddWant = async (textOverride?: string) => {
+    if (addingWantRef.current) return;
     const text = textOverride ?? newWantText;
     if (!text.trim()) return;
+    addingWantRef.current = true;
     const item: WantItem = {
       id: Date.now().toString(),
       want: text.trim(),
@@ -86,6 +97,7 @@ export default function CreativeWorkshopTopicScreen() {
     setShowAddWant(false);
     setAddingReasonFor(item.id);
     setNewReasonText('');
+    addingWantRef.current = false;
   };
 
   const handleDeleteWant = async (id: string) => {
@@ -107,16 +119,39 @@ export default function CreativeWorkshopTopicScreen() {
 
   // ── Reason actions ──────────────────────────────────────────────────────────
 
-  const handleAddReason = async (wantId: string, keepOpen = false) => {
-    if (!newReasonText.trim()) return;
+  const scrollToCardBottom = (_wantId: string) => {
+    scrollRef.current?.scrollToEnd({ animated: true });
+  };
+
+  const handleAddReason = async (wantId: string, keepOpen = false, textOverride?: string) => {
+    const text = textOverride ?? newReasonText;
+    if (!text.trim()) return;
     const item = items.find((i) => i.id === wantId);
     if (!item) return;
-    const updated = { ...item, reasons: [...item.reasons, newReasonText.trim()] };
+    const updated = { ...item, reasons: [...item.reasons, text.trim()] };
     await updateWantItem(topic, updated);
     setItems((prev) => prev.map((i) => (i.id === wantId ? updated : i)));
     setNewReasonText('');
-    if (!keepOpen) setAddingReasonFor(null);
-    else setTimeout(() => reasonInputRef.current?.focus(), 30);
+    if (!keepOpen) {
+      setAddingReasonFor(null);
+    } else {
+      setTimeout(() => {
+        reasonInputRef.current?.focus();
+        scrollToCardBottom(wantId);
+      }, 80);
+    }
+  };
+
+  const handleSaveReasonEdit = async (wantId: string, index: number) => {
+    const item = items.find((i) => i.id === wantId);
+    if (!item) return;
+    const trimmed = editingReasonText.trim();
+    if (trimmed) {
+      const updated = { ...item, reasons: item.reasons.map((r, i) => i === index ? trimmed : r) };
+      await updateWantItem(topic, updated);
+      setItems((prev) => prev.map((i) => (i.id === wantId ? updated : i)));
+    }
+    setEditingReasonKey(null);
   };
 
   const handleDeleteReason = async (wantId: string, index: number) => {
@@ -177,6 +212,9 @@ export default function CreativeWorkshopTopicScreen() {
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            onContentSizeChange={() => {
+              if (addingReasonFor) scrollRef.current?.scrollToEnd({ animated: true });
+            }}
           >
             {/* Empty state */}
             {items.length === 0 && !showAddWant && (
@@ -188,7 +226,14 @@ export default function CreativeWorkshopTopicScreen() {
 
             {/* Want cards */}
             {items.map((item) => (
-              <View key={item.id} style={[styles.wantCard, { borderLeftColor: config.color }]}>
+              <View
+                key={item.id}
+                style={[styles.wantCard, { borderLeftColor: config.color }]}
+                onLayout={(e) => {
+                  cardYOffsets.current[item.id] = e.nativeEvent.layout.y;
+                  cardHeights.current[item.id] = e.nativeEvent.layout.height;
+                }}
+              >
 
                 {/* Want text row */}
                 <View style={styles.wantHeader}>
@@ -232,18 +277,37 @@ export default function CreativeWorkshopTopicScreen() {
                 </View>
 
                 {/* Reasons */}
-                {item.reasons.map((reason, i) => (
-                  <View key={i} style={styles.reasonRow}>
-                    <Text style={[styles.reasonBullet, { color: config.color }]}>•</Text>
-                    <Text style={styles.reasonText}>{reason}</Text>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteReason(item.id, i)}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Text style={styles.deleteXSmall}>×</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))}
+                {item.reasons.map((reason, i) => {
+                  const key = `${item.id}-${i}`;
+                  return (
+                    <View key={i} style={styles.reasonRow}>
+                      <Text style={[styles.reasonBullet, { color: config.color }]}>•</Text>
+                      {editingReasonKey === key ? (
+                        <TextInput
+                          ref={editReasonInputRef}
+                          style={[styles.reasonText, styles.reasonEditInput]}
+                          value={editingReasonText}
+                          onChangeText={setEditingReasonText}
+                          onBlur={() => handleSaveReasonEdit(item.id, i)}
+                          autoFocus
+                          multiline
+                        />
+                      ) : (
+                        <TouchableOpacity style={{ flex: 1 }} onPress={() => { setEditingReasonKey(key); setEditingReasonText(reason); }}>
+                          <Text style={styles.reasonText}>{reason}</Text>
+                        </TouchableOpacity>
+                      )}
+                      {editingReasonKey !== key && (
+                        <TouchableOpacity
+                          onPress={() => handleDeleteReason(item.id, i)}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Text style={styles.deleteXSmall}>×</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })}
 
                 {/* Inline reason input */}
                 {addingReasonFor === item.id ? (
@@ -254,12 +318,19 @@ export default function CreativeWorkshopTopicScreen() {
                         ref={reasonInputRef}
                         style={styles.reasonInput}
                         value={newReasonText}
-                        onChangeText={setNewReasonText}
+                        onChangeText={(text) => {
+                          if (text.includes('\n')) {
+                            const trimmed = text.replace(/\n/g, '');
+                            setNewReasonText('');
+                            handleAddReason(item.id, true, trimmed);
+                          } else {
+                            setNewReasonText(text);
+                          }
+                        }}
                         placeholder="Because..."
                         placeholderTextColor="#C4A8D4"
-                        returnKeyType="done"
+                        multiline
                         blurOnSubmit={false}
-                        onSubmitEditing={() => handleAddReason(item.id, true)}
                       />
                     </View>
                     <View style={styles.reasonInputActions}>
@@ -337,11 +408,9 @@ export default function CreativeWorkshopTopicScreen() {
                 </View>
               </View>
             )}
-          </ScrollView>
 
-          {/* Add want button + archive link */}
-          {!showAddWant && (
-            <View style={styles.bottomArea}>
+            {/* Add want button — inside ScrollView so it never overlaps content */}
+            {!showAddWant && (
               <TouchableOpacity
                 style={[styles.addBtn, { backgroundColor: config.color }]}
                 onPress={() => {
@@ -353,8 +422,8 @@ export default function CreativeWorkshopTopicScreen() {
               >
                 <Text style={styles.addBtnText}>+ Add a want</Text>
               </TouchableOpacity>
-            </View>
-          )}
+            )}
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
@@ -391,6 +460,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     gap: 12,
   },
+
   emptyBox: {
     alignItems: 'center',
     paddingTop: 80,
@@ -454,8 +524,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   reasonBullet: {
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 21,
     fontFamily: 'Nunito_700Bold',
   },
   reasonText: {
@@ -467,11 +537,17 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   deleteXSmall: { fontSize: 20, color: '#9B72CC', lineHeight: 22 },
+  reasonEditInput: {
+    padding: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0D0F0',
+    minHeight: 32,
+  },
 
   // Inline reason input
   reasonInputRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingLeft: 4,
     gap: 8,
   },
@@ -542,13 +618,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
-  // Bottom area
-  bottomArea: {
-    gap: 8,
-    paddingBottom: 20,
-  },
   addBtn: {
     marginHorizontal: 16,
+    marginTop: 4,
     marginBottom: 20,
     borderRadius: 20,
     paddingVertical: 16,

@@ -12,7 +12,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import TableOfContents from '../components/TableOfContents';
 import EntryPage from '../components/EntryPage';
-import { getEntries } from '../storage/entriesStorage';
+import { getEntries, deleteEntry } from '../storage/entriesStorage';
 import { Entry } from '../types';
 
 type Nav = StackNavigationProp<RootStackParamList, 'Book'>;
@@ -75,6 +75,13 @@ export default function BookScreen() {
     navigation.navigate('CreateEntry', { entry });
   };
 
+  const handleDeleteEntry = async (entry: Entry) => {
+    await deleteEntry(entry.id);
+    const updated = entries.filter((e) => e.id !== entry.id);
+    setEntries(updated);
+    pagerRef.current?.setPage(0);
+  };
+
   const totalPages = entries.length + 1;
 
   const pageLabel =
@@ -92,7 +99,10 @@ export default function BookScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => currentPage === 0 ? navigation.goBack() : pagerRef.current?.setPage(0)}
+          style={styles.backBtn}
+        >
           <Text style={styles.backText} numberOfLines={1}>‹ Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerLabel} numberOfLines={1}>
@@ -122,6 +132,7 @@ export default function BookScreen() {
             <EntryPage
               entry={entry}
               onEdit={() => handleEditEntry(entry)}
+              onDelete={() => handleDeleteEntry(entry)}
             />
           </View>
         ))}

@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import BulletRow from './BulletRow';
@@ -13,6 +14,7 @@ import { Entry } from '../types';
 type Props = {
   entry: Entry;
   onEdit: () => void;
+  onDelete: () => void;
 };
 
 function formatDate(iso: string): string {
@@ -20,7 +22,17 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-export default function EntryPage({ entry, onEdit }: Props) {
+export default function EntryPage({ entry, onEdit, onDelete }: Props) {
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete this entry?',
+      `"${entry.topic}" will be permanently removed.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: onDelete },
+      ]
+    );
+  };
   return (
     <LinearGradient colors={['#EEE0FA', '#FFD6E0']} style={styles.gradient}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -31,9 +43,14 @@ export default function EntryPage({ entry, onEdit }: Props) {
               <Text style={styles.topic}>{entry.topic}</Text>
               <Text style={styles.date}>{formatDate(entry.createdAt)}</Text>
             </View>
-            <TouchableOpacity onPress={onEdit} style={styles.editBtn}>
-              <Text style={styles.editText}>✏️ Edit</Text>
-            </TouchableOpacity>
+            <View style={styles.entryBtns}>
+              <TouchableOpacity onPress={onEdit} style={styles.editBtn}>
+                <Text style={styles.editText}>✏️ Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
+                <Text style={styles.deleteText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.topicDivider} />
@@ -83,7 +100,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: '#2E1A47',
     fontFamily: 'Pacifico_400Regular',
-    lineHeight: 36,
+    lineHeight: 46,
   },
   date: {
     fontSize: 16,
@@ -91,17 +108,31 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito_400Regular',
     marginTop: 2,
   },
+  entryBtns: {
+    gap: 6,
+    alignItems: 'flex-end',
+    marginTop: 4,
+  },
   editBtn: {
     backgroundColor: '#F3E8FF',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    marginTop: 4,
   },
   editText: {
     fontSize: 15,
     color: '#7B4FA6',
     fontFamily: 'Nunito_700Bold',
+  },
+  deleteBtn: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  deleteText: {
+    fontSize: 13,
+    color: '#C47090',
+    fontFamily: 'Nunito_400Regular',
+    textDecorationLine: 'underline',
   },
   topicDivider: {
     height: 2,

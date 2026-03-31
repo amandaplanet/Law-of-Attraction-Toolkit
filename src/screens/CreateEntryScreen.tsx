@@ -231,11 +231,12 @@ const styles = StyleSheet.create({
   },
   topicInput: {
     fontSize: 26,
-    lineHeight: 38,
+    lineHeight: 46,
     color: '#2E1A47',
     fontFamily: 'Pacifico_400Regular',
     marginBottom: 4,
-    paddingVertical: 4,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   topicDivider: {
     height: 2,

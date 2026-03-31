@@ -30,6 +30,7 @@ export default function PlacematScreen() {
   const posthog = usePostHog();
   const [placemat, setPlacemat] = useState<Placemat>(makeEmptyPlacemat());
   const [newItemText, setNewItemText] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const addInputRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -74,6 +75,10 @@ export default function PlacematScreen() {
 
   const deleteItem = (id: string) => {
     updateItems((items) => items.filter((i) => i.id !== id));
+  };
+
+  const updateItemText = (id: string, text: string) => {
+    updateItems((items) => items.map((i) => i.id === id ? { ...i, text } : i));
   };
 
   const handleArchive = () => {
@@ -136,7 +141,20 @@ export default function PlacematScreen() {
 
               {inbox.map((item) => (
                 <View key={item.id} style={styles.inboxRow}>
-                  <Text style={styles.inboxText}>{item.text}</Text>
+                  {editingId === item.id ? (
+                    <TextInput
+                      style={[styles.inboxText, styles.inlineEdit]}
+                      value={item.text}
+                      onChangeText={(t) => updateItemText(item.id, t)}
+                      onBlur={() => setEditingId(null)}
+                      autoFocus
+                      multiline
+                    />
+                  ) : (
+                    <TouchableOpacity style={{ flex: 1 }} onPress={() => setEditingId(item.id)}>
+                      <Text style={styles.inboxText}>{item.text}</Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity
                     style={[styles.assignBtn, styles.assignBtnMe]}
                     onPress={() => assign(item.id, 'mine')}
@@ -201,7 +219,20 @@ export default function PlacematScreen() {
                       : <View style={[styles.checkCircle, { borderColor: '#7B4FA6' }]} />
                     }
                   </TouchableOpacity>
-                  <Text style={[styles.checkedText, item.done && styles.doneText]}>{item.text}</Text>
+                  {editingId === item.id ? (
+                    <TextInput
+                      style={[styles.checkedText, styles.inlineEdit]}
+                      value={item.text}
+                      onChangeText={(t) => updateItemText(item.id, t)}
+                      onBlur={() => setEditingId(null)}
+                      autoFocus
+                      multiline
+                    />
+                  ) : (
+                    <TouchableOpacity style={{ flex: 1 }} onPress={() => setEditingId(item.id)}>
+                      <Text style={[styles.checkedText, item.done && styles.doneText]}>{item.text}</Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity
                     style={[styles.moveBtn, { borderColor: '#4A90D9' }]}
                     onPress={() => moveTo(item.id, 'universe')}
@@ -232,7 +263,20 @@ export default function PlacematScreen() {
                       : <View style={[styles.checkCircle, { borderColor: '#4A90D9' }]} />
                     }
                   </TouchableOpacity>
-                  <Text style={[styles.checkedText, item.done && styles.doneText]}>{item.text}</Text>
+                  {editingId === item.id ? (
+                    <TextInput
+                      style={[styles.checkedText, styles.inlineEdit]}
+                      value={item.text}
+                      onChangeText={(t) => updateItemText(item.id, t)}
+                      onBlur={() => setEditingId(null)}
+                      autoFocus
+                      multiline
+                    />
+                  ) : (
+                    <TouchableOpacity style={{ flex: 1 }} onPress={() => setEditingId(item.id)}>
+                      <Text style={[styles.checkedText, item.done && styles.doneText]}>{item.text}</Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity
                     style={[styles.moveBtn, { borderColor: '#7B4FA6' }]}
                     onPress={() => {
@@ -446,6 +490,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   moveBtnText: { fontSize: 13, fontFamily: 'Nunito_700Bold' },
+  inlineEdit: {
+    flex: 1,
+    padding: 0,
+  },
 
   // Archive
   archiveBtn: {

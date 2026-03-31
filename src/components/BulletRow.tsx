@@ -99,8 +99,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito_400Regular',
     lineHeight: 26,
     minHeight: 26,
-    paddingTop: 0,
-    paddingBottom: 0,
+    paddingTop: 2,
+    paddingBottom: 2,
   },
   displayText: {
     flex: 1,

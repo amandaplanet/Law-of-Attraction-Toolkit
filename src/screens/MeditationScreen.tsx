@@ -152,9 +152,14 @@ export default function MeditationScreen() {
 
   const playAlarm = async () => {
     try {
+      // Stop the looping source but keep the AudioContext open so iOS
+      // honours the existing audio session when the screen is off.
+      try { sourceNodeRef.current?.stop(); } catch {}
+      sourceNodeRef.current = null;
+
       const asset = Asset.fromModule(ALARM_SOURCE);
       await asset.downloadAsync();
-      const ctx = new AudioContext();
+      const ctx = audioContextRef.current ?? new AudioContext();
       const response = await fetch(asset.localUri!);
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
@@ -222,8 +227,7 @@ export default function MeditationScreen() {
   const finishSession = () => {
     setTimerState('done');
     stopPulse();
-    stopAudio();
-    playAlarm();
+    playAlarm(); // stopAudio is handled inside playAlarm to keep the session alive
     clearNowPlaying();
     posthog.capture('meditation_completed', {
       duration_minutes: selectedMins,
@@ -316,12 +320,11 @@ export default function MeditationScreen() {
               {timerState === 'paused' && (
                 <Text style={styles.pausedLabel}>paused</Text>
               )}
+              {timerState === 'running' && (
+                <Text style={styles.noiseLabel}>🎵 {currentSound.label.toLowerCase()}</Text>
+              )}
             </View>
           )}
-
-          <Text style={styles.noiseLabel}>
-            {timerState === 'running' ? `🎵 ${currentSound.label.toLowerCase()}` : ''}
-          </Text>
         </View>
 
         {/* Controls */}
@@ -469,12 +472,11 @@ const styles = StyleSheet.create({
   doneTitle: { fontSize: 36, color: '#F0E6FF', fontFamily: 'Pacifico_400Regular' },
   doneSub:   { fontSize: 18, color: '#C4A8D4', fontFamily: 'Nunito_400Regular', marginTop: 6 },
   noiseLabel: {
-    position: 'absolute',
-    bottom: -40,
     fontSize: 15,
     color: '#B08AD4',
     fontFamily: 'Nunito_400Regular',
     letterSpacing: 0.5,
+    marginTop: 10,
   },
   controls:  { paddingBottom: 48, alignItems: 'center' },
   btnRow:    { flexDirection: 'row', gap: 16, alignItems: 'center' },

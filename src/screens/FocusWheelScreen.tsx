@@ -9,6 +9,8 @@ import {
   Alert,
   Animated,
   Easing,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -80,8 +82,8 @@ export default function FocusWheelScreen() {
   }, [updateSpoke, scrollToSpoke]);
 
   const scrollToSpoke = useCallback((i: number) => {
-    const y = pageYOffset.current + spokeYOffsets.current[i];
-    scrollRef.current?.scrollTo({ y, animated: true });
+    const y = pageYOffset.current + spokeYOffsets.current[i] - 100;
+    scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: true });
   }, []);
 
   const handleSpokePress = useCallback((i: number) => {
@@ -145,13 +147,16 @@ export default function FocusWheelScreen() {
           </View>
 
           {/* Inputs + Wheel inside one ScrollView */}
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
           <ScrollView
             ref={scrollRef}
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="interactive"
-            automaticallyAdjustKeyboardInsets={true}
             showsVerticalScrollIndicator={false}
           >
             {/* Wheel — scrolls with content */}
@@ -239,6 +244,7 @@ export default function FocusWheelScreen() {
                       placeholder={`Statement ${i + 1}…`}
                       placeholderTextColor="#CDAEE8"
                       multiline
+                      scrollEnabled={false}
                     />
                   </View>
                 );
@@ -250,6 +256,7 @@ export default function FocusWheelScreen() {
               </TouchableOpacity>
             </View>
           </ScrollView>
+          </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
   );
