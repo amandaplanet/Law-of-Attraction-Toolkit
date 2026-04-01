@@ -163,7 +163,7 @@ export default function HomeScreen() {
             <View style={styles.modalBox}>
               <Text style={styles.modalTitle}>About</Text>
               <Text style={styles.modalBody}>
-                This app is an independent project and is not created by, affiliated with, or endorsed by Esther Hicks, Jerry Hicks, or Abraham-Hicks Publications. All Abraham-Hicks teachings, quotes, and materials are the intellectual property of Esther Hicks and Abraham-Hicks Publications. This app is created by a fan for the community, out of love for the teachings.
+                This app is an independent project and is not created by, affiliated with, or endorsed by Abraham-Hicks Publications.{'\n\n'}The teachings, processes, and concepts referenced in this app are by Abraham-Hicks, © Jerry & Esther Hicks. For more information, visit AbrahamHicks.com or call (830) 755-2299.{'\n\n'}This app is created by a fan for the community, out of love for the teachings.
               </Text>
               <TouchableOpacity style={styles.modalClose} onPress={() => setAboutVisible(false)}>
                 <Text style={styles.modalCloseText}>Close</Text>

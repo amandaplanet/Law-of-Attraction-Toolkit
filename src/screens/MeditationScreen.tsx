@@ -367,7 +367,7 @@ export default function MeditationScreen() {
         {/* Credits */}
         <View style={styles.credits}>
           <Text style={styles.creditLine}>
-            Completion sound © Esther Hicks / Abraham-Hicks Publications
+            Completion sound by Abraham-Hicks, © Jerry & Esther Hicks{'\n'}AbrahamHicks.com · (830) 755-2299
           </Text>
           {currentSound.attribution && (
             <Text style={styles.creditLine}>{currentSound.attribution}</Text>
