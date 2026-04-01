@@ -170,6 +170,7 @@ export default function PivotScreen() {
               placeholder="I don't want…"
               placeholderTextColor="rgba(176,138,212,0.35)"
               multiline
+              scrollEnabled={false}
               blurOnSubmit={false}
             />
           </View>
@@ -208,6 +209,7 @@ export default function PivotScreen() {
                   placeholder="I do want…"
                   placeholderTextColor="rgba(176,138,212,0.35)"
                   multiline
+                  scrollEnabled={false}
                   blurOnSubmit={false}
                 />
                 {doWants.length > 1 && (

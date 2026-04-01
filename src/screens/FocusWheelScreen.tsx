@@ -205,7 +205,11 @@ export default function FocusWheelScreen() {
                 placeholder="I am… / I have… / I love…"
                 placeholderTextColor="#C9A8E0"
                 multiline
-                onFocus={() => setActiveIndex(null)}
+                scrollEnabled={false}
+                onFocus={() => {
+                  setActiveIndex(null);
+                  scrollRef.current?.scrollTo({ y: Math.max(0, pageYOffset.current - 20), animated: true });
+                }}
                 blurOnSubmit={false}
               />
 
@@ -254,6 +258,26 @@ export default function FocusWheelScreen() {
               <TouchableOpacity style={styles.archiveBtn} onPress={handleArchive}>
                 <Text style={styles.archiveBtnText}>Archive & Start New  ✦</Text>
               </TouchableOpacity>
+
+              {(wheel.centerStatement.trim() || filledCount > 0) && (
+                <TouchableOpacity
+                  style={styles.clearBtn}
+                  onPress={() => Alert.alert(
+                    'Clear and start over?',
+                    'This will erase your current wheel without archiving it.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Clear', style: 'destructive', onPress: () => {
+                        setWheel(makeEmptyWheel());
+                        setActiveIndex(null);
+                        scrollRef.current?.scrollTo({ y: 0, animated: true });
+                      }},
+                    ]
+                  )}
+                >
+                  <Text style={styles.clearBtnText}>Clear and Start Over</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </ScrollView>
           </KeyboardAvoidingView>
@@ -407,5 +431,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontFamily: 'Nunito_700Bold',
+  },
+  clearBtn: {
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+  },
+  clearBtnText: {
+    fontSize: 15,
+    color: '#A080C0',
+    fontFamily: 'Nunito_400Regular',
+    textDecorationLine: 'underline',
   },
 });

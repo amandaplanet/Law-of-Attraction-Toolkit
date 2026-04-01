@@ -77,9 +77,10 @@ export default function BookScreen() {
 
   const handleDeleteEntry = async (entry: Entry) => {
     await deleteEntry(entry.id);
-    const updated = entries.filter((e) => e.id !== entry.id);
-    setEntries(updated);
     pagerRef.current?.setPage(0);
+    setTimeout(() => {
+      setEntries((prev) => prev.filter((e) => e.id !== entry.id));
+    }, 350);
   };
 
   const totalPages = entries.length + 1;
