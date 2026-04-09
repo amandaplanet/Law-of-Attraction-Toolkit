@@ -33,18 +33,44 @@ type ProcessKey =
 type PeriodData = {
   key: string; // YYYY-MM-DD (daily) or YYYY-MM (monthly)
   emotionLevel: number | null;
+  allEmotions: number[]; // all logged emotions in chronological order
   completions: Record<ProcessKey, number>;
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-// Colors matching the Emotional Guidance Scale, levels 1–22
+// Colors and labels matching the Emotional Guidance Scale, levels 1–22
 const EMOTION_COLORS = [
   '#FFD700', '#FFC107', '#FFAB40', '#A5D6A7', '#66BB6A',
   '#4DB6AC', '#4FC3F7', '#90A4AE', '#78909C', '#FFCC80',
   '#FFA726', '#FF8A65', '#FF7043', '#EF5350', '#E53935',
   '#C62828', '#AD1457', '#880E4F', '#6A1B9A', '#4527A0',
   '#283593', '#1A237E',
+];
+
+const EMOTION_LABELS = [
+  'Joy',
+  'Passion',
+  'Enthusiasm',
+  'Positive Expectation',
+  'Optimism',
+  'Hopefulness',
+  'Contentment',
+  'Boredom',
+  'Pessimism',
+  'Frustration',
+  'Overwhelment',
+  'Disappointment',
+  'Doubt',
+  'Worry',
+  'Blame',
+  'Discouragement',
+  'Anger',
+  'Revenge',
+  'Hatred',
+  'Jealousy',
+  'Insecurity',
+  'Fear',
 ];
 
 const PROCESS_EMOJIS: Record<ProcessKey, string> = {
@@ -55,6 +81,16 @@ const PROCESS_EMOJIS: Record<ProcessKey, string> = {
   placemat:    '🍽️',
   pivot:       '🔄',
   workshop:    '🎨',
+};
+
+const PROCESS_LABELS: Record<ProcessKey, string> = {
+  meditation:  'Meditation',
+  sixty_eight: '68-Second',
+  book:        'Book',
+  focus_wheel: 'Focus Wheel',
+  placemat:    'Placemat',
+  pivot:       'Pivot',
+  workshop:    'Workshop',
 };
 
 const PROCESS_KEYS: ProcessKey[] = [
@@ -146,7 +182,7 @@ async function loadReportData(scale: Scale): Promise<PeriodData[]> {
   // Build map seeded with all periods
   const dataMap: Record<string, PeriodData & { _emotions: number[] }> = {};
   for (const key of periods) {
-    dataMap[key] = { key, emotionLevel: null, completions: emptyCompletions(), _emotions: [] };
+    dataMap[key] = { key, emotionLevel: null, allEmotions: [], completions: emptyCompletions(), _emotions: [] };
   }
 
   // Activity log events
@@ -162,6 +198,7 @@ async function loadReportData(scale: Scale): Promise<PeriodData[]> {
   for (const key of periods) {
     const levels = dataMap[key]._emotions;
     if (levels.length === 0) continue;
+    dataMap[key].allEmotions = levels;
     // Daily: last logged; Monthly: average
     dataMap[key].emotionLevel = scale === '1y'
       ? levels.reduce((a, b) => a + b, 0) / levels.length
@@ -192,7 +229,7 @@ async function loadReportData(scale: Scale): Promise<PeriodData[]> {
   }
 
   return periods.map((key) => {
-    const { _emotions: _, ...rest } = dataMap[key];
+    const { _emotions: _e, ...rest } = dataMap[key];
     return rest;
   });
 }
@@ -312,6 +349,147 @@ function EmotionChart({
   );
 }
 
+// ── Stat cards ────────────────────────────────────────────────────────────────
+
+function computeStats(data: PeriodData[], scale: Scale) {
+  const withEmotion = data.filter((d) => d.emotionLevel !== null);
+  const avgLevel = withEmotion.length > 0
+    ? withEmotion.reduce((s, d) => s + d.emotionLevel!, 0) / withEmotion.length
+    : null;
+
+  let bestLevel: number | null = null;
+  for (const d of withEmotion) {
+    if (bestLevel === null || d.emotionLevel! < bestLevel) bestLevel = d.emotionLevel!;
+  }
+
+  const totalSessions = data.reduce((sum, d) =>
+    sum + PROCESS_KEYS.reduce((s2, k) => s2 + d.completions[k], 0), 0);
+
+  // Streak: consecutive periods (most recent first) with any activity
+  let streak = 0;
+  const reversed = [...data].reverse();
+  for (const d of reversed) {
+    const hasActivity =
+      d.emotionLevel !== null || PROCESS_KEYS.some((k) => d.completions[k] > 0);
+    if (!hasActivity) break;
+    streak++;
+  }
+
+  const periodLabel = scale === '7d' ? 'this week' : scale === '1m' ? 'this month' : 'this year';
+  const streakUnit  = scale === '1y' ? 'month' : 'day';
+
+  return { avgLevel, bestLevel, totalSessions, streak, periodLabel, streakUnit };
+}
+
+function StatCards({ data, scale }: { data: PeriodData[]; scale: Scale }) {
+  const { avgLevel, bestLevel, totalSessions, streak, periodLabel, streakUnit } = computeStats(data, scale);
+  const bestIdx   = bestLevel !== null ? Math.min(Math.round(bestLevel) - 1, 21) : -1;
+  const bestColor = bestIdx >= 0 ? EMOTION_COLORS[bestIdx] : null;
+  const bestLabel = bestIdx >= 0 ? EMOTION_LABELS[bestIdx] : null;
+  const avgIdx    = avgLevel !== null ? Math.min(Math.round(avgLevel) - 1, 21) : -1;
+  const avgColor  = avgIdx >= 0 ? EMOTION_COLORS[avgIdx] : null;
+
+  return (
+    <View style={cardStyles.grid}>
+      {/* Avg level */}
+      <View style={cardStyles.card}>
+        {avgLevel !== null ? (
+          <Text style={[cardStyles.bigNum, avgColor ? { color: avgColor } : null]}>
+            {avgLevel.toFixed(1)}
+          </Text>
+        ) : (
+          <Text style={cardStyles.bigNum}>—</Text>
+        )}
+        <Text style={cardStyles.cardLabel}>Avg level {periodLabel}</Text>
+      </View>
+
+      {/* Best level */}
+      <View style={cardStyles.card}>
+        {bestColor && bestLabel ? (
+          <View style={cardStyles.bestRow}>
+            <View style={[cardStyles.bestBadge, { backgroundColor: bestColor }]}>
+              <Text style={cardStyles.bestBadgeText}>{Math.round(bestLevel!)}</Text>
+            </View>
+            <View>
+              <Text style={cardStyles.bestName}>{bestLabel}</Text>
+              <Text style={cardStyles.cardLabel}>Best level</Text>
+            </View>
+          </View>
+        ) : (
+          <>
+            <Text style={cardStyles.bigNum}>—</Text>
+            <Text style={cardStyles.cardLabel}>Best level</Text>
+          </>
+        )}
+      </View>
+
+      {/* Total sessions */}
+      <View style={cardStyles.card}>
+        <Text style={cardStyles.bigNum}>{totalSessions}</Text>
+        <Text style={cardStyles.cardLabel}>Total sessions</Text>
+      </View>
+
+      {/* Streak */}
+      <View style={cardStyles.card}>
+        <Text style={cardStyles.bigNum}>{streak > 0 ? `${streak} 🔥` : '—'}</Text>
+        <Text style={cardStyles.cardLabel}>{streakUnit.charAt(0).toUpperCase() + streakUnit.slice(1)} streak</Text>
+      </View>
+    </View>
+  );
+}
+
+const cardStyles = StyleSheet.create({
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 24,
+  },
+  card: {
+    width: '48%',
+    backgroundColor: '#1A0A2E',
+    borderRadius: 16,
+    padding: 14,
+    justifyContent: 'flex-start',
+  },
+  bigNum: {
+    fontSize: 26,
+    fontFamily: 'Nunito_700Bold',
+    color: '#B08AD4',
+    lineHeight: 30,
+  },
+  cardLabel: {
+    fontSize: 11,
+    color: '#7B5FA0',
+    fontFamily: 'Nunito_400Regular',
+    marginTop: 3,
+  },
+  bestRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bestBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  bestBadgeText: {
+    fontSize: 12,
+    fontFamily: 'Nunito_700Bold',
+    color: '#fff',
+  },
+  bestName: {
+    fontSize: 13,
+    fontFamily: 'Nunito_700Bold',
+    color: '#E8D5F5',
+    lineHeight: 16,
+  },
+});
+
 // ── Period row ────────────────────────────────────────────────────────────────
 
 function PeriodRow({ data, scale }: { data: PeriodData; scale: Scale }) {
@@ -321,28 +499,92 @@ function PeriodRow({ data, scale }: { data: PeriodData; scale: Scale }) {
 
   if (!hasActivity && scale !== '7d') return null;
 
-  const emotionIdx = data.emotionLevel !== null
-    ? Math.min(Math.round(data.emotionLevel) - 1, 21)
-    : -1;
-  const emotionColor = emotionIdx >= 0 ? EMOTION_COLORS[emotionIdx] : null;
   const completedProcesses = PROCESS_KEYS.filter((k) => data.completions[k] > 0);
+  const isDaily = scale !== '1y';
+
+  // Date label formatting
+  let dateTop: string;
+  let dateBottom: string;
+  if (scale === '1y') {
+    const mon = parseInt(data.key.slice(5, 7), 10) - 1;
+    dateTop    = MONTH_SHORT[mon];
+    dateBottom = data.key.slice(0, 4);
+  } else {
+    const d = new Date(data.key + 'T12:00:00');
+    const today = toDateKey(new Date());
+    dateTop    = data.key === today ? 'TODAY' : DAY_SHORT[d.getDay()].toUpperCase();
+    dateBottom = `${MONTH_SHORT[d.getMonth()]} ${d.getDate()}`;
+  }
+
+  // Emotion display
+  const multiEmotion = isDaily && data.allEmotions.length > 1;
+  const firstLevel   = data.allEmotions[0];
+  const lastLevel    = data.emotionLevel;
+
+  const emotionBadge = (level: number, size: number = 24) => {
+    const idx   = Math.min(Math.round(level) - 1, 21);
+    const color = EMOTION_COLORS[idx];
+    const isDark = idx >= 16; // dark backgrounds need white text
+    return (
+      <View style={[rowStyles.badge, { width: size, height: size, borderRadius: size / 2, backgroundColor: color }]}>
+        <Text style={[rowStyles.badgeText, { fontSize: size * 0.5, color: isDark ? '#fff' : 'rgba(0,0,0,0.7)' }]}>
+          {Math.round(level)}
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <View style={rowStyles.row}>
-      <Text style={rowStyles.label} numberOfLines={1}>
-        {formatPeriodLabel(data.key, scale)}
-      </Text>
-      {emotionColor ? (
-        <View style={[rowStyles.badge, { backgroundColor: emotionColor }]}>
-          <Text style={rowStyles.badgeText}>{Math.round(data.emotionLevel!)}</Text>
-        </View>
-      ) : (
-        <View style={rowStyles.badgePlaceholder} />
-      )}
-      <View style={rowStyles.icons}>
-        {completedProcesses.map((k) => (
-          <Text key={k} style={rowStyles.icon}>{PROCESS_EMOJIS[k]}</Text>
-        ))}
+      {/* Date column */}
+      <View style={rowStyles.dateCol}>
+        <Text style={[rowStyles.dateTop, data.key === toDateKey(new Date()) && rowStyles.dateTopToday]}>
+          {dateTop}
+        </Text>
+        <Text style={rowStyles.dateBottom}>{dateBottom}</Text>
+      </View>
+
+      {/* Emotion column */}
+      <View style={rowStyles.emotionCol}>
+        {lastLevel !== null ? (
+          multiEmotion ? (
+            <View style={rowStyles.journeyWrap}>
+              <View style={rowStyles.journeyRow}>
+                {emotionBadge(firstLevel, 22)}
+                <Text style={rowStyles.arrow}>→</Text>
+                {emotionBadge(lastLevel, 22)}
+              </View>
+              <Text style={rowStyles.checkIns}>{data.allEmotions.length} check-ins</Text>
+            </View>
+          ) : (
+            emotionBadge(lastLevel, 26)
+          )
+        ) : null}
+      </View>
+
+      {/* Content column */}
+      <View style={rowStyles.content}>
+        {lastLevel !== null && (
+          <Text style={rowStyles.emotionName} numberOfLines={1}>
+            {multiEmotion
+              ? `${EMOTION_LABELS[Math.min(Math.round(firstLevel) - 1, 21)]} → ${EMOTION_LABELS[Math.min(Math.round(lastLevel) - 1, 21)]}`
+              : EMOTION_LABELS[Math.min(Math.round(lastLevel) - 1, 21)]}
+          </Text>
+        )}
+        {completedProcesses.length > 0 && (
+          <View style={rowStyles.chips}>
+            {completedProcesses.map((k) => (
+              <View key={k} style={rowStyles.chip}>
+                <Text style={rowStyles.chipText}>
+                  {PROCESS_EMOJIS[k]} {PROCESS_LABELS[k]}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+        {!hasActivity && (
+          <Text style={rowStyles.noActivity}>—</Text>
+        )}
       </View>
     </View>
   );
@@ -351,41 +593,93 @@ function PeriodRow({ data, scale }: { data: PeriodData; scale: Scale }) {
 const rowStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
+    alignItems: 'flex-start',
+    paddingVertical: 11,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(176,138,212,0.08)',
     gap: 10,
   },
-  label: {
-    width: 116,
-    fontSize: 14,
+  dateCol: {
+    width: 48,
+    flexShrink: 0,
+  },
+  dateTop: {
+    fontSize: 10,
+    color: '#7B5FA0',
+    fontFamily: 'Nunito_700Bold',
+    lineHeight: 14,
+    textTransform: 'uppercase',
+  },
+  dateTopToday: {
+    color: '#B08AD4',
+  },
+  dateBottom: {
+    fontSize: 13,
     color: '#C4A8D4',
-    fontFamily: 'Nunito_400Regular',
+    fontFamily: 'Nunito_700Bold',
+  },
+  emotionCol: {
+    width: 52,
+    flexShrink: 0,
+    alignItems: 'center',
+    paddingTop: 2,
   },
   badge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgePlaceholder: {
-    width: 28,
-    height: 28,
-  },
   badgeText: {
-    fontSize: 13,
-    color: '#000',
     fontFamily: 'Nunito_700Bold',
   },
-  icons: {
+  journeyWrap: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  journeyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  arrow: {
+    fontSize: 10,
+    color: '#7B5FA0',
+  },
+  checkIns: {
+    fontSize: 9,
+    color: '#7B5FA0',
+    fontFamily: 'Nunito_400Regular',
+    fontStyle: 'italic',
+  },
+  content: {
     flex: 1,
+  },
+  emotionName: {
+    fontSize: 13,
+    color: '#B08AD4',
+    fontFamily: 'Nunito_700Bold',
+    marginBottom: 5,
+  },
+  chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: 5,
   },
-  icon: { fontSize: 16 },
+  chip: {
+    backgroundColor: 'rgba(123,79,166,0.2)',
+    borderRadius: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 7,
+  },
+  chipText: {
+    fontSize: 11,
+    color: '#C4A8D4',
+    fontFamily: 'Nunito_400Regular',
+  },
+  noActivity: {
+    fontSize: 14,
+    color: 'rgba(176,138,212,0.25)',
+    fontFamily: 'Nunito_400Regular',
+  },
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -450,6 +744,11 @@ export default function ReportScreen() {
               <EmotionChart data={data} scale={scale} svgWidth={svgWidth} />
             )}
           </View>
+
+          {/* Stat cards */}
+          {data && hasAnyData && (
+            <StatCards data={data} scale={scale} />
+          )}
 
           {/* Activity list */}
           <Text style={styles.sectionTitle}>Activity</Text>
