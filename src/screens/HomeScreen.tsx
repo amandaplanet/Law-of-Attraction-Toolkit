@@ -148,6 +148,21 @@ export default function HomeScreen() {
               </View>
               <Text style={styles.cardArrow}>›</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.card, styles.cardProgress]}
+              onPress={() => navigation.navigate('Report')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.cardEmoji}>📊</Text>
+              <View style={styles.cardText}>
+                <Text style={styles.cardTitle}>Your Progress</Text>
+                <Text style={styles.cardDesc}>
+                  Track your emotional level and practice over time
+                </Text>
+              </View>
+              <Text style={styles.cardArrow}>›</Text>
+            </TouchableOpacity>
           </ScrollView>
 
           <View style={styles.footerRow}>
@@ -226,6 +241,11 @@ const styles = StyleSheet.create({
   cardDark: {
     backgroundColor: '#1A0A2E',
     shadowColor: '#0A0015',
+  },
+  cardProgress: {
+    backgroundColor: '#EDE0F8',
+    borderWidth: 1,
+    borderColor: 'rgba(123, 79, 166, 0.2)',
   },
   cardEmoji: { fontSize: 36, marginRight: 16 },
   cardText: { flex: 1 },

@@ -79,3 +79,8 @@ export type Workshop = {
   customTopics: CustomTopic[];
   archive: WorkshopArchiveEntry[];
 };
+
+export type ActivityEvent =
+  | { type: 'meditation'; timestamp: string; durationMins: number }
+  | { type: 'sixty_eight'; timestamp: string }
+  | { type: 'emotion'; timestamp: string; level: number };

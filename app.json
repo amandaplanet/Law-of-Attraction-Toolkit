@@ -18,7 +18,8 @@
         "UIBackgroundModes": [
           "audio"
         ],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSHealthUpdateUsageDescription": "Law of Attraction Toolkit saves your meditation sessions to Apple Health as Mindful Minutes."
       },
       "bundleIdentifier": "com.amandaplanet.AbrahamHicksToolkit"
     },
@@ -40,7 +41,8 @@
     "plugins": [
       "expo-font",
       "react-native-audio-api",
-      "./plugins/withNowPlaying"
+      "./plugins/withNowPlaying",
+      "./plugins/withHealthKit"
     ],
     "extra": {
       "eas": {

@@ -15,6 +15,12 @@ interface NowPlayingInfo {
  * need to call this once on start, once on pause, and once on resume.
  * No-ops on Android.
  */
+export function activateAudioSession(): void {
+  if (Platform.OS === 'ios') {
+    NowPlayingModule?.activateAudioSession();
+  }
+}
+
 export function setNowPlaying(info: NowPlayingInfo): void {
   if (Platform.OS === 'ios') {
     NowPlayingModule?.setNowPlaying(info);

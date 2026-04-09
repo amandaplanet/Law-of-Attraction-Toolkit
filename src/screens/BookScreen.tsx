@@ -12,6 +12,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import TableOfContents from '../components/TableOfContents';
 import EntryPage from '../components/EntryPage';
+import InfoButton from '../components/InfoButton';
 import { getEntries, deleteEntry } from '../storage/entriesStorage';
 import { Entry } from '../types';
 
@@ -106,12 +107,15 @@ export default function BookScreen() {
         >
           <Text style={styles.backText} numberOfLines={1}>‹ Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerLabel} numberOfLines={1}>
-          {pageLabel}
-        </Text>
-        <Text style={styles.pageCount}>
-          {currentPage + 1}/{totalPages}
-        </Text>
+        <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0 }}>
+          <Text style={[styles.headerLabel, { textAlign: 'center' }]} numberOfLines={1}>{pageLabel}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <InfoButton source="Inspired by Process #8 of Ask and It Is Given" showPrivacy />
+          <Text style={styles.pageCount}>
+            {currentPage + 1}/{totalPages}
+          </Text>
+        </View>
       </View>
 
       <PagerView

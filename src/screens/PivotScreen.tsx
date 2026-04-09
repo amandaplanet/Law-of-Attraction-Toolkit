@@ -18,6 +18,7 @@ import {
   getPivotDraft, savePivotDraft, archivePivot, getArchivedPivots,
 } from '../storage/pivotStorage';
 import { usePostHog } from 'posthog-react-native';
+import InfoButton from '../components/InfoButton';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 
@@ -119,14 +120,19 @@ export default function PivotScreen() {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backText} numberOfLines={1}>‹ Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Pivoting</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('PivotArchive')}
-            style={[styles.archiveBtn, !hasArchive && styles.hidden]}
-            disabled={!hasArchive}
-          >
-            <Text style={styles.archiveBtnText}>Archive ›</Text>
-          </TouchableOpacity>
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0 }}>
+            <Text style={[styles.headerTitle, { textAlign: 'center' }]}>Pivoting</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <InfoButton source="Inspired by Process #16 of Ask and It Is Given" showPrivacy />
+            <TouchableOpacity
+              onPress={() => navigation.navigate('PivotArchive')}
+              style={[styles.archiveBtn, !hasArchive && styles.hidden]}
+              disabled={!hasArchive}
+            >
+              <Text style={styles.archiveBtnText}>Archive ›</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <Text style={styles.tagline}>

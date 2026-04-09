@@ -10,6 +10,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { WorkshopTopic, CustomTopic, Workshop } from '../types';
 import { getWorkshop, archiveAllTopics, addCustomTopic, deleteCustomTopic } from '../storage/workshopStorage';
+import InfoButton from '../components/InfoButton';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 
@@ -102,13 +103,16 @@ export default function CreativeWorkshopScreen() {
             <Text style={styles.backText} numberOfLines={1}>‹ Back</Text>
           </TouchableOpacity>
           <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>Creative Workshop</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CreativeWorkshopArchive')}
-            style={[styles.historyBtn, !hasArchive && styles.hidden]}
-            disabled={!hasArchive}
-          >
-            <Text style={styles.historyText}>Archive</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <InfoButton source="Inspired by Process #3 of Ask and It Is Given" showPrivacy />
+            <TouchableOpacity
+              onPress={() => navigation.navigate('CreativeWorkshopArchive')}
+              style={[styles.historyBtn, !hasArchive && styles.hidden]}
+              disabled={!hasArchive}
+            >
+              <Text style={styles.historyText}>Archive</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <Text style={styles.subtitle}>What would you like to create?</Text>

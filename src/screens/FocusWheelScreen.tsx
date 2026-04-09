@@ -23,6 +23,7 @@ import {
   getDraft, saveDraft, archiveWheel, makeEmptyWheel,
 } from '../storage/focusWheelStorage';
 import { usePostHog } from 'posthog-react-native';
+import InfoButton from '../components/InfoButton';
 
 type Nav = StackNavigationProp<RootStackParamList, 'FocusWheel'>;
 
@@ -137,13 +138,16 @@ export default function FocusWheelScreen() {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
               <Text style={styles.backText} numberOfLines={1}>‹ Back</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Focus Wheel</Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('FocusWheelArchive')}
-              style={styles.historyBtn}
-            >
-              <Text style={styles.historyText}>Archive ›</Text>
-            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { flex: 1, textAlign: 'center' }]}>Focus Wheel</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <InfoButton source="Inspired by Process #17 of Ask and It Is Given" showPrivacy />
+              <TouchableOpacity
+                onPress={() => navigation.navigate('FocusWheelArchive')}
+                style={styles.historyBtn}
+              >
+                <Text style={styles.historyText}>Archive ›</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Inputs + Wheel inside one ScrollView */}

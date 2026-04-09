@@ -10,6 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
 import { usePostHog } from 'posthog-react-native';
+import { logActivity } from '../storage/activityStorage';
+import InfoButton from '../components/InfoButton';
 
 // ─── Arc geometry ────────────────────────────────────────────────────────────
 const SVG_SIZE  = 280;
@@ -73,6 +75,7 @@ export default function SixtyEightSecondScreen() {
   useEffect(() => {
     if (state === 'running' && elapsed >= 68) {
       setState('done');
+      logActivity({ type: 'sixty_eight', timestamp: new Date().toISOString() });
       posthog.capture('sixty_eight_second_completed');
     }
   }, [elapsed, state]);
@@ -120,8 +123,10 @@ export default function SixtyEightSecondScreen() {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backText} numberOfLines={1}>‹ Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>68-Second Focus</Text>
-          <View style={{ width: 60 }} />
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0 }}>
+            <Text style={[styles.headerTitle, { textAlign: 'center' }]}>68-Second Focus</Text>
+          </View>
+          <InfoButton source="Inspired by Chapter 21 of Ask and It Is Given" />
         </View>
 
         <Text style={styles.subtitle}>

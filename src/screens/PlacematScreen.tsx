@@ -18,6 +18,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { PlacematItem, Placemat } from '../types';
 import { getDraft, saveDraft, archivePlacemat, makeEmptyPlacemat } from '../storage/placematStorage';
 import { usePostHog } from 'posthog-react-native';
+import InfoButton from '../components/InfoButton';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 
@@ -115,10 +116,15 @@ export default function PlacematScreen() {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
               <Text style={styles.backText} numberOfLines={1}>‹ Back</Text>
             </TouchableOpacity>
-            <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>Placemat</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('PlacematArchive')} style={styles.archiveLink}>
-              <Text style={styles.archiveLinkText}>Archive ›</Text>
-            </TouchableOpacity>
+            <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, paddingHorizontal: 100 }}>
+              <Text style={[styles.title, { textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit>Placemat</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <InfoButton source="Inspired by Process #10 of Ask and It Is Given" showPrivacy />
+              <TouchableOpacity onPress={() => navigation.navigate('PlacematArchive')} style={styles.archiveLink}>
+                <Text style={styles.archiveLinkText}>Archive ›</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <Text style={styles.subtitle}>What's on your plate today?</Text>
@@ -324,8 +330,8 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 4,
   },
-  backBtn: { padding: 8, flex: 1 },
-  archiveLink: { padding: 8, flex: 1, alignItems: 'flex-end' },
+  backBtn: { padding: 8, width: 80 },
+  archiveLink: { padding: 8 },
   archiveLinkText: { fontSize: 15, color: '#4A7FA6', fontFamily: 'Nunito_700Bold' },
   backText: { fontSize: 20, color: '#4A7FA6', fontFamily: 'Nunito_700Bold' },
   title: { fontSize: 20, color: '#4A3060', fontFamily: 'Pacifico_400Regular', flex: 1, textAlign: 'center' },

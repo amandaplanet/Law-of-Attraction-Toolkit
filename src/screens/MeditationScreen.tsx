@@ -11,7 +11,10 @@ import { useNavigation } from '@react-navigation/native';
 import { AudioContext, AudioBuffer } from 'react-native-audio-api';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setNowPlaying, clearNowPlaying } from '../modules/NowPlaying';
+import { activateAudioSession, setNowPlaying, clearNowPlaying } from '../modules/NowPlaying';
+import { saveMindfulSession } from '../modules/HealthKit';
+import { logActivity } from '../storage/activityStorage';
+import InfoButton from '../components/InfoButton';
 import { usePostHog } from 'posthog-react-native';
 
 const PREFS_MINS_KEY  = '@meditation_mins';
@@ -52,6 +55,7 @@ export default function MeditationScreen() {
   const isRunningRef    = useRef(false);
   const pulseAnim       = useRef(new Animated.Value(1)).current;
   const pulseLoopRef    = useRef<Animated.CompositeAnimation | null>(null);
+  const sessionStartRef = useRef<number>(0);
 
   // Load saved preferences
   useEffect(() => {
@@ -195,6 +199,8 @@ export default function MeditationScreen() {
     const secs = selectedMins * 60;
     setSecondsLeft(secs);
     setTimerState('running');
+    sessionStartRef.current = Date.now();
+    activateAudioSession();
     await startAudio(selectedSound);
     startPulse();
     setNowPlaying({ title: `Meditation · ${selectedMins} min`, elapsed: 0, duration: secs, rate: 1.0 });
@@ -229,6 +235,8 @@ export default function MeditationScreen() {
     stopPulse();
     playAlarm(); // stopAudio is handled inside playAlarm to keep the session alive
     clearNowPlaying();
+    saveMindfulSession(sessionStartRef.current, Date.now());
+    logActivity({ type: 'meditation', timestamp: new Date().toISOString(), durationMins: selectedMins });
     posthog.capture('meditation_completed', {
       duration_minutes: selectedMins,
       sound: selectedSound,
@@ -268,8 +276,10 @@ export default function MeditationScreen() {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backText} numberOfLines={1}>‹ Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Meditation</Text>
-          <View style={{ width: 80 }} />
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0 }}>
+            <Text style={[styles.headerTitle, { textAlign: 'center' }]}>Meditation</Text>
+          </View>
+          <InfoButton source="Inspired by Process #6 of Ask and It Is Given" />
         </View>
 
         {/* Duration pills */}

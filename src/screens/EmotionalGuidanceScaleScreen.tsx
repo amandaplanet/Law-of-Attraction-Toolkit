@@ -13,6 +13,8 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { usePostHog } from 'posthog-react-native';
+import { logActivity } from '../storage/activityStorage';
+import InfoButton from '../components/InfoButton';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 type ToolScreen = 'Book' | 'FocusWheel' | 'Meditation' | 'SixtyEightSecond' | 'CreativeWorkshop' | 'Placemat' | 'Pivot';
@@ -199,6 +201,7 @@ export default function EmotionalGuidanceScaleScreen() {
   };
 
   const handleSelect = (level: number) => {
+    logActivity({ type: 'emotion', timestamp: new Date().toISOString(), level });
     if (!isPanelVisible.current) {
       setSelectedLevel(level);
       showPanel();
@@ -238,8 +241,10 @@ export default function EmotionalGuidanceScaleScreen() {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backText} numberOfLines={1}>‹ Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Emotional Scale</Text>
-          <View style={{ width: 60 }} />
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0 }}>
+            <Text style={[styles.headerTitle, { textAlign: 'center' }]}>Emotional Scale</Text>
+          </View>
+          <InfoButton source="Inspired by Chapter 22 of Ask and It Is Given" />
         </View>
 
         <Text style={styles.subtitle}>Where are you right now?</Text>

@@ -1,6 +1,7 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useRef } from 'react';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { usePostHog } from 'posthog-react-native';
 import HomeScreen from '../screens/HomeScreen';
 import CreateEntryScreen from '../screens/CreateEntryScreen';
 import BookScreen from '../screens/BookScreen';
@@ -18,6 +19,7 @@ import PlacematScreen from '../screens/PlacematScreen';
 import PlacematArchiveScreen from '../screens/PlacematArchiveScreen';
 import PivotScreen from '../screens/PivotScreen';
 import PivotArchiveScreen from '../screens/PivotArchiveScreen';
+import ReportScreen from '../screens/ReportScreen';
 import { Entry } from '../types';
 
 export type RootStackParamList = {
@@ -38,13 +40,31 @@ export type RootStackParamList = {
   PlacematArchive: undefined;
   Pivot: undefined;
   PivotArchive: undefined;
+  Report: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
+  const posthog = usePostHog();
+  const navigationRef = useNavigationContainerRef<RootStackParamList>();
+  const routeNameRef = useRef<string | undefined>(undefined);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        const name = navigationRef.getCurrentRoute()?.name;
+        if (name) { posthog.screen(name); routeNameRef.current = name; }
+      }}
+      onStateChange={() => {
+        const name = navigationRef.getCurrentRoute()?.name;
+        if (name && name !== routeNameRef.current) {
+          posthog.screen(name);
+          routeNameRef.current = name;
+        }
+      }}
+    >
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Book" component={BookScreen} />
@@ -63,6 +83,7 @@ export default function AppNavigator() {
         <Stack.Screen name="PlacematArchive" component={PlacematArchiveScreen} />
         <Stack.Screen name="Pivot" component={PivotScreen} />
         <Stack.Screen name="PivotArchive" component={PivotArchiveScreen} />
+        <Stack.Screen name="Report" component={ReportScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

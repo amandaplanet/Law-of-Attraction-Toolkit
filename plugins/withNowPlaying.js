@@ -9,6 +9,7 @@ const MODULE_SOURCE = `\
 #import <Foundation/Foundation.h>
 #import <React/RCTBridgeModule.h>
 #import <MediaPlayer/MediaPlayer.h>
+#import <AVFoundation/AVFoundation.h>
 
 @interface NowPlayingModule : NSObject <RCTBridgeModule>
 @end
@@ -16,6 +17,12 @@ const MODULE_SOURCE = `\
 @implementation NowPlayingModule
 
 RCT_EXPORT_MODULE()
+
+RCT_EXPORT_METHOD(activateAudioSession) {
+  AVAudioSession *session = [AVAudioSession sharedInstance];
+  [session setCategory:AVAudioSessionCategoryPlayback error:nil];
+  [session setActive:YES error:nil];
+}
 
 RCT_EXPORT_METHOD(setNowPlaying:(NSDictionary *)info) {
   NSString *title    = info[@"title"]    ?: @"Meditation";
