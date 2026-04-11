@@ -2,7 +2,7 @@
   "expo": {
     "name": "Law of Attraction Toolkit",
     "slug": "AbrahamHicksToolkit",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/AbrahamAppLogo.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,8 @@
           "audio"
         ],
         "ITSAppUsesNonExemptEncryption": false,
-        "NSHealthUpdateUsageDescription": "Law of Attraction Toolkit saves your meditation sessions to Apple Health as Mindful Minutes."
+        "NSHealthUpdateUsageDescription": "Law of Attraction Toolkit saves your meditation sessions to Apple Health as Mindful Minutes.",
+        "NSHealthShareUsageDescription": "Law of Attraction Toolkit reads health data to support your wellness journey."
       },
       "bundleIdentifier": "com.amandaplanet.AbrahamHicksToolkit"
     },

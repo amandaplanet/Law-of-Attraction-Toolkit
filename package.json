@@ -6,7 +6,16 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "testMatch": ["**/src/__tests__/**/*.test.ts"],
+    "moduleFileExtensions": ["ts", "tsx", "js", "json"],
+    "moduleNameMapper": {
+      "@react-native-async-storage/async-storage": "@react-native-async-storage/async-storage/jest/async-storage-mock"
+    }
   },
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.4.2",
@@ -36,7 +45,9 @@
     "react-native-svg": "15.12.1"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.0",
+    "jest-expo": "^55.0.15",
     "typescript": "~5.9.2"
   },
   "private": true
