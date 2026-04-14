@@ -282,7 +282,7 @@ export default function ThirtyDayPracticeScreen() {
 
             <TouchableOpacity
               style={styles.doneBtn}
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.navigate('ThirtyDayDashboard')}
               activeOpacity={0.85}
             >
               <Text style={styles.doneBtnText}>View My Progress  →</Text>
