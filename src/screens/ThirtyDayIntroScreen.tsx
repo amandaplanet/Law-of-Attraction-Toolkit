@@ -11,6 +11,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { makeNewProcess, saveActiveProcess } from '../storage/thirtyDayStorage';
+import InfoButton from '../components/InfoButton';
 
 type Nav   = StackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'ThirtyDayIntro'>;
@@ -60,10 +61,13 @@ export default function ThirtyDayIntroScreen() {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          {/* Back */}
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backText}>‹ Back</Text>
-          </TouchableOpacity>
+          {/* Header */}
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+              <Text style={styles.backText}>‹ Back</Text>
+            </TouchableOpacity>
+            <InfoButton source={"Abraham's 30-Day Process\nAbraham Now — Additional Resources, 2020"} />
+          </View>
 
           {/* Decorative stars */}
           <View style={styles.starsRow}>
@@ -124,9 +128,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingBottom: 40,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 8,
+  },
   backBtn: {
-    paddingVertical: 16,
-    alignSelf: 'flex-start',
+    paddingVertical: 8,
   },
   backText: {
     fontSize: 20,
