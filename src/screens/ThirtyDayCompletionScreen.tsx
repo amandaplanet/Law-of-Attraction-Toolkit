@@ -252,9 +252,16 @@ export default function ThirtyDayCompletionScreen() {
                   <Text style={styles.s2Label}>pages of positive aspects</Text>
                 </View>
               </View>
+              <View style={styles.s2Row}>
+                <Text style={styles.s2Emoji}>🎯</Text>
+                <View>
+                  <Text style={styles.s2BigNum}>{stats?.totalFocusWheels ?? 30}</Text>
+                  <Text style={styles.s2Label}>focus wheels</Text>
+                </View>
+              </View>
               <View style={styles.dividerLight} />
               <Text style={styles.s2Total}>
-                {(stats?.totalMeditations ?? 30) + (stats?.totalBookEntries ?? 30)} intentional acts of alignment.
+                {(stats?.totalMeditations ?? 30) + (stats?.totalBookEntries ?? 30) + (stats?.totalFocusWheels ?? 30)} intentional acts of alignment.
               </Text>
             </View>
           )}

@@ -21,6 +21,7 @@ import {
 } from '../storage/thirtyDayStorage';
 import { getActivityLog } from '../storage/activityStorage';
 import { getEntries } from '../storage/entriesStorage';
+import { getArchivedWheels } from '../storage/focusWheelStorage';
 import { ThirtyDayProcess, ThirtyDayEntry } from '../types';
 import { EMOTION_COLORS, EMOTION_LABELS } from '../utils/reportLogic';
 
@@ -33,6 +34,8 @@ type PracticeStep =
   | 'meditation-done'
   | 'book'
   | 'book-done'
+  | 'focus-wheel'
+  | 'focus-wheel-done'
   | 'emotion-after'
   | 'complete';
 
@@ -66,12 +69,13 @@ function determineStep(entry: ThirtyDayEntry): PracticeStep {
   if (entry.emotionBefore === null)    return 'emotion-before';
   if (!entry.meditationDone)           return 'meditation';
   if (!entry.bookDone)                 return 'book';
+  if (!entry.focusWheelDone)           return 'focus-wheel';
   if (entry.emotionAfter === null)     return 'emotion-after';
   return 'complete';
 }
 
 function makeEmptyEntry(date: string): ThirtyDayEntry {
-  return { date, emotionBefore: null, emotionAfter: null, meditationDone: false, bookDone: false, completed: false };
+  return { date, emotionBefore: null, emotionAfter: null, meditationDone: false, bookDone: false, focusWheelDone: false, completed: false };
 }
 
 function upsertEntry(process: ThirtyDayProcess, entry: ThirtyDayEntry): ThirtyDayProcess {
@@ -112,6 +116,12 @@ export default function ThirtyDayPracticeScreen() {
             e = { ...e, bookDone: true };
           }
         }
+        if (!e.focusWheelDone) {
+          const wheels = await getArchivedWheels();
+          if (wheels.some((w) => w.archivedAt?.startsWith(today))) {
+            e = { ...e, focusWheelDone: true };
+          }
+        }
 
         const newProc = upsertEntry(proc, e);
         if (!cancelled) {
@@ -119,9 +129,10 @@ export default function ThirtyDayPracticeScreen() {
           setProcess(newProc);
           setEntry(e);
           setStep((prev) => {
-            if (prev === 'loading')                        return determineStep(e);
-            if (prev === 'meditation' && e.meditationDone) return 'meditation-done';
-            if (prev === 'book'       && e.bookDone)       return 'book-done';
+            if (prev === 'loading')                              return determineStep(e);
+            if (prev === 'meditation'   && e.meditationDone)    return 'meditation-done';
+            if (prev === 'book'         && e.bookDone)          return 'book-done';
+            if (prev === 'focus-wheel'  && e.focusWheelDone)    return 'focus-wheel-done';
             return prev;
           });
         }
@@ -147,7 +158,7 @@ export default function ThirtyDayPracticeScreen() {
     if (!entry) return;
     const updated = { ...entry, emotionBefore: level };
     await saveEntry(updated);
-    setStep('meditation');
+    setStep(determineStep(updated));
   };
 
   const handleEmotionAfter = async (level: number) => {
@@ -167,14 +178,21 @@ export default function ThirtyDayPracticeScreen() {
     if (!entry) return;
     const updated = { ...entry, meditationDone: true };
     await saveEntry(updated);
-    setStep('book');
+    setStep(determineStep(updated));
   };
 
   const handleBookDone = async () => {
     if (!entry) return;
     const updated = { ...entry, bookDone: true };
     await saveEntry(updated);
-    setStep('emotion-after');
+    setStep(determineStep(updated));
+  };
+
+  const handleFocusWheelDone = async () => {
+    if (!entry) return;
+    const updated = { ...entry, focusWheelDone: true };
+    await saveEntry(updated);
+    setStep(determineStep(updated));
   };
 
   const completedCount = process ? getCompletedCount(process) : 0;
@@ -248,14 +266,16 @@ export default function ThirtyDayPracticeScreen() {
   // ── Step header ────────────────────────────────────────────────────────────
 
   const stepNumbers: Record<PracticeStep, string> = {
-    'loading':          '',
-    'emotion-before':   'Step 1 of 4',
-    'meditation':       'Step 2 of 4',
-    'meditation-done':  'Step 2 of 4',
-    'book':             'Step 3 of 4',
-    'book-done':        'Step 3 of 4',
-    'emotion-after':    'Step 4 of 4',
-    'complete':         '',
+    'loading':           '',
+    'emotion-before':    'Step 1 of 5',
+    'meditation':        'Step 2 of 5',
+    'meditation-done':   'Step 2 of 5',
+    'book':              'Step 3 of 5',
+    'book-done':         'Step 3 of 5',
+    'focus-wheel':       'Step 4 of 5',
+    'focus-wheel-done':  'Step 4 of 5',
+    'emotion-after':     'Step 5 of 5',
+    'complete':          '',
   };
 
   // ── Emotion picker (shared for before/after) ───────────────────────────────
@@ -382,6 +402,30 @@ export default function ThirtyDayPracticeScreen() {
       btnLabel: '',
       onNavigate: () => {},
       onManualDone: handleBookDone,
+      onContinue: () => setStep('focus-wheel'),
+    },
+    'focus-wheel': {
+      emoji: '🎯',
+      title: 'Focus Wheel',
+      body: 'Choose a desire and build 12 statements of genuine belief around it. Each spoke raises your vibration toward it.',
+      doneTitle: 'Focus Wheel complete',
+      doneBody: 'You have aligned with what you want.',
+      btnLabel: 'Open Focus Wheel',
+      onNavigate: () => {
+        navigation.navigate('FocusWheel');
+      },
+      onManualDone: handleFocusWheelDone,
+      onContinue: () => setStep('emotion-after'),
+    },
+    'focus-wheel-done': {
+      emoji: '🎯',
+      title: 'Focus Wheel',
+      body: '',
+      doneTitle: 'Focus Wheel complete ✓',
+      doneBody: 'You have aligned with what you want.',
+      btnLabel: '',
+      onNavigate: () => {},
+      onManualDone: handleFocusWheelDone,
       onContinue: () => setStep('emotion-after'),
     },
   };
@@ -389,7 +433,7 @@ export default function ThirtyDayPracticeScreen() {
   const cfg = stepConfig[step];
   if (!cfg) return null;
 
-  const isDone = step === 'meditation-done' || step === 'book-done';
+  const isDone = step === 'meditation-done' || step === 'book-done' || step === 'focus-wheel-done';
 
   return (
     <View style={styles.bg}>

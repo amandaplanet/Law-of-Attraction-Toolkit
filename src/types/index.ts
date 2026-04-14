@@ -86,6 +86,7 @@ export type ThirtyDayEntry = {
   emotionAfter: number | null;
   meditationDone: boolean;
   bookDone: boolean;
+  focusWheelDone: boolean;
   completed: boolean;
 };
 

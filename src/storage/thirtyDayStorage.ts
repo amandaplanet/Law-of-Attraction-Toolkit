@@ -108,6 +108,7 @@ export function hasPerfectAttendance(process: ThirtyDayProcess): boolean {
 export type CompletionStats = {
   totalMeditations:  number;
   totalBookEntries:  number;
+  totalFocusWheels:  number;
   avgBefore:         number | null;
   avgAfter:          number | null;
   bestDayLabel:      string | null;
@@ -122,6 +123,7 @@ export function computeCompletionStats(process: ThirtyDayProcess): CompletionSta
 
   const totalMeditations = completed.filter((d) => d.meditationDone).length;
   const totalBookEntries = completed.filter((d) => d.bookDone).length;
+  const totalFocusWheels = completed.filter((d) => d.focusWheelDone).length;
 
   const befores = completed.map((d) => d.emotionBefore).filter((n): n is number => n !== null);
   const afters  = completed.map((d) => d.emotionAfter).filter((n): n is number => n !== null);
@@ -151,6 +153,7 @@ export function computeCompletionStats(process: ThirtyDayProcess): CompletionSta
   return {
     totalMeditations,
     totalBookEntries,
+    totalFocusWheels,
     avgBefore,
     avgAfter,
     bestDayLabel,

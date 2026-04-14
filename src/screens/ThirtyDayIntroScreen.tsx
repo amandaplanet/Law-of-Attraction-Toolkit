@@ -27,6 +27,11 @@ const STEPS = [
     body: 'Choose a subject you love and write what you genuinely appreciate about it.',
   },
   {
+    emoji: '🎯',
+    title: 'Focus Wheel',
+    body: 'Choose a desire and build 12 statements of genuine belief around it.',
+  },
+  {
     emoji: '✨',
     title: 'Check In With Yourself',
     body: 'Notice how you feel before and after. Over time, the shift speaks for itself.',
@@ -79,7 +84,7 @@ export default function ThirtyDayIntroScreen() {
           {/* Intro copy */}
           <Text style={styles.body}>
             Each morning, before you begin your day, spend a few quiet minutes
-            with two of the most powerful tools in the Abraham-Hicks toolkit.
+            with three of the most powerful tools in the Abraham-Hicks toolkit.
           </Text>
 
           {/* Steps */}
