@@ -27,6 +27,7 @@ import {
   getTodayEntry,
   getDaysMissed,
   hasPerfectAttendance,
+  PROCESS_LENGTH,
 } from '../storage/thirtyDayStorage';
 import { ThirtyDayProcess } from '../types';
 
@@ -313,7 +314,7 @@ function ThirtyDayProcessCard({
   const todayDone      = todayEntry?.completed ?? false;
   const daysMissed     = getDaysMissed(process);
   const needsRestart   = daysMissed > 3;
-  const dayNum         = Math.min(completedCount + (todayDone ? 0 : 1), 30);
+  const dayNum         = Math.min(completedCount + (todayDone ? 0 : 1), PROCESS_LENGTH);
 
   return (
     <TouchableOpacity
@@ -322,8 +323,8 @@ function ThirtyDayProcessCard({
       activeOpacity={0.85}
     >
       <View style={processCardStyles.dayBubble}>
-        <Text style={processCardStyles.dayNum}>{completedCount >= 30 ? '✓' : dayNum}</Text>
-        <Text style={processCardStyles.dayOf}>of 30</Text>
+        <Text style={processCardStyles.dayNum}>{completedCount >= PROCESS_LENGTH ? '✓' : dayNum}</Text>
+        <Text style={processCardStyles.dayOf}>of {PROCESS_LENGTH}</Text>
       </View>
       <View style={processCardStyles.text}>
         {needsRestart ? (
@@ -338,7 +339,7 @@ function ThirtyDayProcessCard({
           </>
         ) : (
           <>
-            <Text style={processCardStyles.title}>Day {dayNum} of 30</Text>
+            <Text style={processCardStyles.title}>Day {dayNum} of {PROCESS_LENGTH}</Text>
             <Text style={processCardStyles.subtitle}>
               {todayEntry ? 'Practice in progress' : "Ready for today's practice"}
             </Text>

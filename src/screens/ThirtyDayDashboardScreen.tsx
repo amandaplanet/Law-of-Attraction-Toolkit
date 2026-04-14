@@ -21,6 +21,7 @@ import {
   getTodayEntry,
   getDaysMissed,
   getTodayDateKey,
+  PROCESS_LENGTH,
 } from '../storage/thirtyDayStorage';
 import { ThirtyDayProcess } from '../types';
 import { EMOTION_COLORS, EMOTION_LABELS } from '../utils/reportLogic';
@@ -82,8 +83,8 @@ export default function ThirtyDayDashboardScreen() {
   const todayDone = todayEntry?.completed ?? false;
   const daysMissed = getDaysMissed(process);
   const needsRestart = daysMissed > 3;
-  const currentDayNum = Math.min(completedCount + (todayDone ? 0 : 1), 30);
-  const progress = completedCount / 30;
+  const currentDayNum = Math.min(completedCount + (todayDone ? 0 : 1), PROCESS_LENGTH);
+  const progress = completedCount / PROCESS_LENGTH;
 
   const handleStartFresh = async () => {
     await finalizeProcess(process, 'abandoned');
@@ -168,11 +169,11 @@ export default function ThirtyDayDashboardScreen() {
           <View style={styles.dayCounterRow}>
             <View style={styles.dayBadge}>
               <Text style={styles.dayBadgeNum}>{currentDayNum}</Text>
-              <Text style={styles.dayBadgeOf}>of 30</Text>
+              <Text style={styles.dayBadgeOf}>of {PROCESS_LENGTH}</Text>
             </View>
             <View style={styles.dayCounterText}>
               <Text style={styles.dayLabel}>
-                {completedCount >= 30 ? 'All 30 days complete!' : todayDone ? `Day ${completedCount} complete` : `Day ${currentDayNum}`}
+                {completedCount >= PROCESS_LENGTH ? `All ${PROCESS_LENGTH} days complete!` : todayDone ? `Day ${completedCount} complete` : `Day ${currentDayNum}`}
               </Text>
               <Text style={styles.daySubLabel}>Your Morning Ritual</Text>
             </View>
@@ -182,11 +183,11 @@ export default function ThirtyDayDashboardScreen() {
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
           </View>
-          <Text style={styles.progressLabel}>{completedCount} of 30 days complete</Text>
+          <Text style={styles.progressLabel}>{completedCount} of {PROCESS_LENGTH} days complete</Text>
 
           {/* Grid */}
           <View style={styles.grid}>
-            {Array.from({ length: 30 }, (_, i) => {
+            {Array.from({ length: PROCESS_LENGTH }, (_, i) => {
               const num = i + 1;
               const state = getCircleState(num, completedCount, todayDone);
               return (
@@ -216,7 +217,7 @@ export default function ThirtyDayDashboardScreen() {
           </View>
 
           {/* Today card */}
-          {completedCount < 30 && (
+          {completedCount < PROCESS_LENGTH && (
             <View style={styles.todayCard}>
               <Text style={styles.todayCardTitle}>Today's Practice</Text>
 
@@ -252,10 +253,10 @@ export default function ThirtyDayDashboardScreen() {
           )}
 
           {/* All done state */}
-          {completedCount >= 30 && (
+          {completedCount >= PROCESS_LENGTH && (
             <View style={styles.allDoneCard}>
               <Text style={styles.allDoneEmoji}>🌟</Text>
-              <Text style={styles.allDoneTitle}>30 Days Complete!</Text>
+              <Text style={styles.allDoneTitle}>{PROCESS_LENGTH} Days Complete!</Text>
               <Text style={styles.allDoneBody}>
                 You showed up every day for yourself. That momentum is yours forever.
               </Text>
@@ -264,7 +265,7 @@ export default function ThirtyDayDashboardScreen() {
                 onPress={handleStartFresh}
                 activeOpacity={0.85}
               >
-                <Text style={styles.beginAgainText}>Begin Another 30 Days</Text>
+                <Text style={styles.beginAgainText}>Begin Another {PROCESS_LENGTH} Days</Text>
               </TouchableOpacity>
             </View>
           )}

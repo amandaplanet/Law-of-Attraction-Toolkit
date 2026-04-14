@@ -4,6 +4,9 @@ import { ThirtyDayProcess, ThirtyDayEntry } from '../types';
 const ACTIVE_KEY  = '@thirty_day_active';
 const HISTORY_KEY = '@thirty_day_history';
 
+// Change back to 30 when done testing
+export const PROCESS_LENGTH = 3;
+
 function makeId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
@@ -95,11 +98,11 @@ export function hasPerfectAttendance(process: ThirtyDayProcess): boolean {
   const sorted = process.days
     .filter((d) => d.completed)
     .sort((a, b) => a.date.localeCompare(b.date));
-  if (sorted.length < 30) return false;
+  if (sorted.length < PROCESS_LENGTH) return false;
   const first = new Date(sorted[0].date + 'T12:00:00');
-  const last  = new Date(sorted[29].date + 'T12:00:00');
+  const last  = new Date(sorted[PROCESS_LENGTH - 1].date + 'T12:00:00');
   const diff  = Math.round((last.getTime() - first.getTime()) / (1000 * 60 * 60 * 24));
-  return diff === 29;
+  return diff === PROCESS_LENGTH - 1;
 }
 
 export type CompletionStats = {

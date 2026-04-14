@@ -17,6 +17,7 @@ import {
   finalizeProcess,
   getCompletedCount,
   getTodayDateKey,
+  PROCESS_LENGTH,
 } from '../storage/thirtyDayStorage';
 import { getActivityLog } from '../storage/activityStorage';
 import { getEntries } from '../storage/entriesStorage';
@@ -154,7 +155,7 @@ export default function ThirtyDayPracticeScreen() {
     const completedCount = getCompletedCount(process);
     const updated = { ...entry, emotionAfter: level, completed: true };
     const newProc = await saveEntry(updated);
-    if (newProc && completedCount + 1 >= 30) {
+    if (newProc && completedCount + 1 >= PROCESS_LENGTH) {
       await finalizeProcess(newProc, 'completed');
       navigation.replace('ThirtyDayCompletion');
     } else {
@@ -192,7 +193,7 @@ export default function ThirtyDayPracticeScreen() {
   if (step === 'complete') {
     const beforeIdx = entry.emotionBefore !== null ? Math.min(Math.round(entry.emotionBefore) - 1, 21) : -1;
     const afterIdx  = entry.emotionAfter  !== null ? Math.min(Math.round(entry.emotionAfter)  - 1, 21) : -1;
-    const isAllDone = completedCount >= 30;
+    const isAllDone = completedCount >= PROCESS_LENGTH;
 
     return (
       <View style={styles.bg}>
