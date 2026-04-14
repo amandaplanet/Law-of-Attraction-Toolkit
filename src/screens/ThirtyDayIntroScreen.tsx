@@ -12,6 +12,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { makeNewProcess, saveActiveProcess } from '../storage/thirtyDayStorage';
 import InfoButton from '../components/InfoButton';
+import { usePostHog } from 'posthog-react-native';
 
 type Nav   = StackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'ThirtyDayIntro'>;
@@ -42,6 +43,7 @@ const STEPS = [
 export default function ThirtyDayIntroScreen() {
   const navigation = useNavigation<Nav>();
   const route      = useRoute<Route>();
+  const posthog    = usePostHog();
   const readOnly   = route.params?.readOnly ?? false;
 
   const handleBegin = async () => {
@@ -51,6 +53,7 @@ export default function ThirtyDayIntroScreen() {
     }
     const process = makeNewProcess();
     await saveActiveProcess(process);
+    posthog.capture('thirty_day_process_started');
     navigation.replace('ThirtyDayDashboard');
   };
 

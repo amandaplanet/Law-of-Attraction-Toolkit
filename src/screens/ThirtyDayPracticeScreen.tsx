@@ -17,8 +17,10 @@ import {
   finalizeProcess,
   getCompletedCount,
   getTodayDateKey,
+  computeCompletionStats,
   PROCESS_LENGTH,
 } from '../storage/thirtyDayStorage';
+import { usePostHog } from 'posthog-react-native';
 import { getActivityLog } from '../storage/activityStorage';
 import { getEntries } from '../storage/entriesStorage';
 import { getArchivedWheels } from '../storage/focusWheelStorage';
@@ -85,6 +87,7 @@ function upsertEntry(process: ThirtyDayProcess, entry: ThirtyDayEntry): ThirtyDa
 
 export default function ThirtyDayPracticeScreen() {
   const navigation = useNavigation<Nav>();
+  const posthog    = usePostHog();
   const [step,    setStep]    = useState<PracticeStep>('loading');
   const [process, setProcess] = useState<ThirtyDayProcess | null>(null);
   const [entry,   setEntry]   = useState<ThirtyDayEntry | null>(null);
@@ -164,10 +167,37 @@ export default function ThirtyDayPracticeScreen() {
   const handleEmotionAfter = async (level: number) => {
     if (!entry || !process) return;
     const completedCount = getCompletedCount(process);
+    const dayNum = completedCount + 1;
     const updated = { ...entry, emotionAfter: level, completed: true };
     const newProc = await saveEntry(updated);
-    if (newProc && completedCount + 1 >= PROCESS_LENGTH) {
+
+    // Per-day event — always fire
+    const emotionBefore = entry.emotionBefore;
+    posthog.capture('thirty_day_day_completed', {
+      day_num:       dayNum,
+      emotion_before: emotionBefore,
+      emotion_after:  level,
+      delta:          emotionBefore !== null ? emotionBefore - level : null,
+      vibration_improved: emotionBefore !== null ? level < emotionBefore : null,
+    });
+
+    if (newProc && dayNum >= PROCESS_LENGTH) {
       await finalizeProcess(newProc, 'completed');
+      const stats = computeCompletionStats(newProc);
+      posthog.capture('thirty_day_process_completed', {
+        avg_before:         stats.avgBefore,
+        avg_after:          stats.avgAfter,
+        delta:              stats.avgBefore !== null && stats.avgAfter !== null
+                              ? stats.avgBefore - stats.avgAfter
+                              : null,
+        vibration_improved: stats.avgBefore !== null && stats.avgAfter !== null
+                              ? stats.avgAfter < stats.avgBefore
+                              : null,
+        perfect_attendance: stats.perfectAttendance,
+        total_meditations:  stats.totalMeditations,
+        total_book_entries: stats.totalBookEntries,
+        total_focus_wheels: stats.totalFocusWheels,
+      });
       navigation.replace('ThirtyDayCompletion');
     } else {
       setStep('complete');

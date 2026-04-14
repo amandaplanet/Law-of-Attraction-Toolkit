@@ -60,6 +60,7 @@ export default function HomeScreen() {
   const dismissMorningPrompt = async () => {
     await AsyncStorage.setItem(DISMISSED_KEY, getTodayDateKey());
     setMorningVisible(false);
+    posthog.capture('thirty_day_morning_prompt_dismissed', { day_num: dayNum });
   };
 
   const handleShare = async () => {
@@ -246,6 +247,7 @@ export default function HomeScreen() {
                 style={modalStyles.cta}
                 onPress={() => {
                   setMorningVisible(false);
+                  posthog.capture('thirty_day_morning_prompt_accepted', { day_num: dayNum });
                   navigation.navigate('ThirtyDayPractice');
                 }}
                 activeOpacity={0.85}

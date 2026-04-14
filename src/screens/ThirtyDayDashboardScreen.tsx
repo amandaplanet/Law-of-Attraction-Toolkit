@@ -25,6 +25,7 @@ import {
 } from '../storage/thirtyDayStorage';
 import { ThirtyDayProcess } from '../types';
 import { EMOTION_COLORS, EMOTION_LABELS } from '../utils/reportLogic';
+import { usePostHog } from 'posthog-react-native';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 
@@ -38,6 +39,7 @@ function getCircleState(i: number, completedCount: number, todayDone: boolean): 
 
 export default function ThirtyDayDashboardScreen() {
   const navigation = useNavigation<Nav>();
+  const posthog    = usePostHog();
   const { width } = useWindowDimensions();
   const [process, setProcess] = useState<ThirtyDayProcess | null>(null);
   const [loaded,  setLoaded]  = useState(false);
@@ -61,7 +63,7 @@ export default function ThirtyDayDashboardScreen() {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
               <Text style={styles.backText}>‹ Back</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>30-Day Practice</Text>
+            <Text style={styles.headerTitle}>{PROCESS_LENGTH}-Day Practice</Text>
             <View style={{ width: 80 }} />
           </View>
           <View style={styles.noProcessWrap}>
@@ -87,6 +89,10 @@ export default function ThirtyDayDashboardScreen() {
   const progress = completedCount / PROCESS_LENGTH;
 
   const handleStartFresh = async () => {
+    posthog.capture('thirty_day_process_abandoned', {
+      days_completed: completedCount,
+      days_missed:    daysMissed,
+    });
     await finalizeProcess(process, 'abandoned');
     const fresh = makeNewProcess();
     await saveActiveProcess(fresh);
@@ -103,7 +109,7 @@ export default function ThirtyDayDashboardScreen() {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
               <Text style={styles.backText}>‹ Back</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>30-Day Practice</Text>
+            <Text style={styles.headerTitle}>{PROCESS_LENGTH}-Day Practice</Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('ThirtyDayIntro', { readOnly: true })}
               style={styles.infoBtn}
@@ -156,7 +162,7 @@ export default function ThirtyDayDashboardScreen() {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
               <Text style={styles.backText}>‹ Back</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>30-Day Practice</Text>
+            <Text style={styles.headerTitle}>{PROCESS_LENGTH}-Day Practice</Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('ThirtyDayIntro', { readOnly: true })}
               style={styles.infoBtn}
