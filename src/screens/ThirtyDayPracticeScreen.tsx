@@ -23,7 +23,7 @@ import {
 import { usePostHog } from 'posthog-react-native';
 import { getActivityLog } from '../storage/activityStorage';
 import { getEntries } from '../storage/entriesStorage';
-import { getArchivedWheels } from '../storage/focusWheelStorage';
+import { getDraft, archiveWheel, clearDraft, getArchivedWheels } from '../storage/focusWheelStorage';
 import { ThirtyDayProcess, ThirtyDayEntry } from '../types';
 import { EMOTION_COLORS, EMOTION_LABELS } from '../utils/reportLogic';
 
@@ -441,7 +441,17 @@ export default function ThirtyDayPracticeScreen() {
       doneTitle: 'Focus Wheel complete',
       doneBody: 'You have aligned with what you want.',
       btnLabel: 'Open Focus Wheel',
-      onNavigate: () => {
+      onNavigate: async () => {
+        const draft = await getDraft();
+        if (draft) {
+          const hasContent = draft.centerStatement.trim() ||
+            draft.spokes.some((s) => s.text.trim());
+          if (hasContent) {
+            await archiveWheel(draft);
+          } else {
+            await clearDraft();
+          }
+        }
         navigation.navigate('FocusWheel');
       },
       onManualDone: handleFocusWheelDone,
