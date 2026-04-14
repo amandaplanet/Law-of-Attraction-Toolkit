@@ -418,7 +418,7 @@ export default function ThirtyDayPracticeScreen() {
       btnLabel: 'Open Book of Positive Aspects',
       onNavigate: () => {
         didNavigateToBook.current = true;
-        navigation.navigate('CreateEntry');
+        navigation.navigate('CreateEntry', { goBackOnDone: true });
       },
       onManualDone: handleBookDone,
       onContinue: () => setStep('emotion-after'),

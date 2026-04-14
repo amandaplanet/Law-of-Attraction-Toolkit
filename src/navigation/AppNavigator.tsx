@@ -29,7 +29,7 @@ import { Entry } from '../types';
 export type RootStackParamList = {
   Home: undefined;
   Book: { jumpToId?: string } | undefined;
-  CreateEntry: { entry?: Entry } | undefined;
+  CreateEntry: { entry?: Entry; goBackOnDone?: boolean } | undefined;
   Meditation: undefined;
   FocusWheel: undefined;
   FocusWheelArchive: undefined;

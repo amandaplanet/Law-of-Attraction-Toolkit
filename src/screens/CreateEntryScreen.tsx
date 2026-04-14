@@ -32,7 +32,8 @@ function makeId(): string {
 export default function CreateEntryScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const existingEntry = route.params?.entry;
+  const existingEntry  = route.params?.entry;
+  const goBackOnDone   = route.params?.goBackOnDone ?? false;
 
   const [topic, setTopic] = useState(existingEntry?.topic ?? '');
   const [bullets, setBullets] = useState<BulletItem[]>(
@@ -92,7 +93,9 @@ export default function CreateEntryScreen() {
   }, []);
 
   const handleDone = () => {
-    if (existingEntry) {
+    if (goBackOnDone) {
+      navigation.goBack();
+    } else if (existingEntry) {
       navigation.navigate('Book', { jumpToId: existingEntry.id });
     } else {
       navigation.navigate('Book');
