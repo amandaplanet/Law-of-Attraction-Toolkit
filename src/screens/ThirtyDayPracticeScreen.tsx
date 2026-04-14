@@ -449,7 +449,7 @@ export default function ThirtyDayPracticeScreen() {
       btnLabel: '',
       onNavigate: () => {},
       onManualDone: handleMeditationDone,
-      onContinue: () => setStep('book'),
+      onContinue: () => setStep('segment-intending'),
     },
     'book': {
       emoji: '📖',

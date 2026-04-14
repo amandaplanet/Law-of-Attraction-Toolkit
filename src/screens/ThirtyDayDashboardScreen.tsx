@@ -60,7 +60,7 @@ export default function ThirtyDayDashboardScreen() {
       <View style={styles.bg}>
         <SafeAreaView style={styles.safe}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backBtn}>
               <Text style={styles.backText}>‹ Back</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{PROCESS_LENGTH}-Day Practice</Text>
@@ -106,7 +106,7 @@ export default function ThirtyDayDashboardScreen() {
       <View style={styles.bg}>
         <SafeAreaView style={styles.safe}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backBtn}>
               <Text style={styles.backText}>‹ Back</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{PROCESS_LENGTH}-Day Practice</Text>
@@ -159,7 +159,7 @@ export default function ThirtyDayDashboardScreen() {
 
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backBtn}>
               <Text style={styles.backText}>‹ Back</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{PROCESS_LENGTH}-Day Practice</Text>

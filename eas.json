@@ -12,6 +12,7 @@
       }
     },
     "preview": {
+      "autoIncrement": true,
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_9GFWZq3YTdwFvPctaEnEnX1QAvyB33E2Y4Zhv9kjyfF",

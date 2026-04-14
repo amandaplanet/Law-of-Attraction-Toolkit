@@ -4,7 +4,6 @@ import { ThirtyDayProcess, ThirtyDayEntry } from '../types';
 const ACTIVE_KEY  = '@thirty_day_active';
 const HISTORY_KEY = '@thirty_day_history';
 
-// Change back to 30 when done testing
 export const PROCESS_LENGTH = 3;
 
 function makeId(): string {
