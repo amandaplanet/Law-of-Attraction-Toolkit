@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,16 +11,56 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { usePostHog } from 'posthog-react-native';
+import {
+  getActiveProcess,
+  getCompletedCount,
+  getTodayEntry,
+  getDaysMissed,
+  getTodayDateKey,
+  PROCESS_LENGTH,
+} from '../storage/thirtyDayStorage';
+
+const DISMISSED_KEY = '@morning_prompt_dismissed';
 
 type Nav = StackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const posthog = usePostHog();
-  const [aboutVisible, setAboutVisible] = useState(false);
+  const [aboutVisible,   setAboutVisible]   = useState(false);
+  const [morningVisible, setMorningVisible] = useState(false);
+  const [dayNum,         setDayNum]         = useState(1);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function checkMorningPrompt() {
+        const dismissed = await AsyncStorage.getItem(DISMISSED_KEY);
+        if (dismissed === getTodayDateKey()) return;
+
+        const process = await getActiveProcess();
+        if (!process) return;
+        if (getDaysMissed(process) > 3) return;
+
+        const todayEntry = getTodayEntry(process);
+        if (todayEntry?.completed) return;
+
+        const completed = getCompletedCount(process);
+        setDayNum(Math.min(completed + 1, PROCESS_LENGTH));
+        setMorningVisible(true);
+      }
+      checkMorningPrompt();
+    }, [])
+  );
+
+  const dismissMorningPrompt = async () => {
+    await AsyncStorage.setItem(DISMISSED_KEY, getTodayDateKey());
+    setMorningVisible(false);
+  };
 
   const handleShare = async () => {
     await Share.share({
@@ -180,6 +220,46 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Morning ritual prompt */}
+        <Modal visible={morningVisible} transparent animationType="fade">
+          <TouchableOpacity
+            style={modalStyles.overlay}
+            activeOpacity={1}
+            onPress={dismissMorningPrompt}
+          >
+            <View style={modalStyles.card} onStartShouldSetResponder={() => true}>
+              <View style={modalStyles.starsRow}>
+                <Text style={modalStyles.star}>✦</Text>
+                <Text style={[modalStyles.star, modalStyles.starLg]}>✦</Text>
+                <Text style={modalStyles.star}>✦</Text>
+              </View>
+
+              <Text style={modalStyles.dayLabel}>
+                Day {dayNum} of {PROCESS_LENGTH}
+              </Text>
+              <Text style={modalStyles.title}>Your Morning{'\n'}Ritual</Text>
+              <Text style={modalStyles.body}>
+                A few quiet minutes now can shift the whole day.
+              </Text>
+
+              <TouchableOpacity
+                style={modalStyles.cta}
+                onPress={() => {
+                  setMorningVisible(false);
+                  navigation.navigate('ThirtyDayPractice');
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={modalStyles.ctaText}>Begin now  →</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={dismissMorningPrompt} style={modalStyles.laterBtn}>
+                <Text style={modalStyles.laterText}>Maybe later</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
         <Modal visible={aboutVisible} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalBox}>
@@ -253,9 +333,9 @@ const styles = StyleSheet.create({
     shadowColor: '#0A0015',
   },
   cardProgress: {
-    backgroundColor: '#EDE0F8',
+    backgroundColor: '#FDE8F0',
     borderWidth: 1,
-    borderColor: 'rgba(123, 79, 166, 0.2)',
+    borderColor: 'rgba(192, 100, 150, 0.2)',
   },
   cardEmoji: { fontSize: 36, marginRight: 16 },
   cardText: { flex: 1 },
@@ -350,5 +430,96 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#7B4FA6',
     fontFamily: 'Nunito_700Bold',
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(14, 4, 40, 0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  card: {
+    backgroundColor: '#FAF5FF',
+    borderRadius: 28,
+    paddingHorizontal: 28,
+    paddingVertical: 32,
+    width: '100%',
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#2E1A47',
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 4,
+  },
+  star: {
+    fontSize: 12,
+    color: '#B08AD4',
+    opacity: 0.6,
+  },
+  starLg: {
+    fontSize: 20,
+    opacity: 1,
+  },
+  dayLabel: {
+    fontSize: 12,
+    color: '#9B72CC',
+    fontFamily: 'Nunito_700Bold',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  title: {
+    fontSize: 38,
+    color: '#2E1A47',
+    fontFamily: 'Pacifico_400Regular',
+    textAlign: 'center',
+    lineHeight: 56,
+    paddingTop: 4,
+  },
+  body: {
+    fontSize: 16,
+    color: '#7B5FA0',
+    fontFamily: 'Nunito_400Regular',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 4,
+  },
+  cta: {
+    backgroundColor: '#7B4FA6',
+    borderRadius: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#7B4FA6',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+    marginTop: 4,
+  },
+  ctaText: {
+    fontSize: 17,
+    color: '#F3E8FF',
+    fontFamily: 'Nunito_700Bold',
+    letterSpacing: 0.3,
+  },
+  laterBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  laterText: {
+    fontSize: 14,
+    color: 'rgba(123, 79, 166, 0.45)',
+    fontFamily: 'Nunito_400Regular',
   },
 });
