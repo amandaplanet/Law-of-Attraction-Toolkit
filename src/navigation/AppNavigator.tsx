@@ -20,6 +20,10 @@ import PlacematArchiveScreen from '../screens/PlacematArchiveScreen';
 import PivotScreen from '../screens/PivotScreen';
 import PivotArchiveScreen from '../screens/PivotArchiveScreen';
 import ReportScreen from '../screens/ReportScreen';
+import ThirtyDayIntroScreen from '../screens/ThirtyDayIntroScreen';
+import ThirtyDayDashboardScreen from '../screens/ThirtyDayDashboardScreen';
+import ThirtyDayPracticeScreen from '../screens/ThirtyDayPracticeScreen';
+import ThirtyDayCompletionScreen from '../screens/ThirtyDayCompletionScreen';
 import { Entry } from '../types';
 
 export type RootStackParamList = {
@@ -41,6 +45,10 @@ export type RootStackParamList = {
   Pivot: undefined;
   PivotArchive: undefined;
   Report: undefined;
+  ThirtyDayIntro: { readOnly?: boolean } | undefined;
+  ThirtyDayDashboard: undefined;
+  ThirtyDayPractice: undefined;
+  ThirtyDayCompletion: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -84,6 +92,10 @@ export default function AppNavigator() {
         <Stack.Screen name="Pivot" component={PivotScreen} />
         <Stack.Screen name="PivotArchive" component={PivotArchiveScreen} />
         <Stack.Screen name="Report" component={ReportScreen} />
+        <Stack.Screen name="ThirtyDayIntro" component={ThirtyDayIntroScreen} />
+        <Stack.Screen name="ThirtyDayDashboard" component={ThirtyDayDashboardScreen} />
+        <Stack.Screen name="ThirtyDayPractice" component={ThirtyDayPracticeScreen} />
+        <Stack.Screen name="ThirtyDayCompletion" component={ThirtyDayCompletionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

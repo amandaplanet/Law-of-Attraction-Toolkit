@@ -170,12 +170,15 @@ export async function loadReportData(scale: Scale): Promise<PeriodData[]> {
     dataMap[key] = { key, emotionLevel: null, allEmotions: [], completions: emptyCompletions(), _emotions: [] };
   }
 
+  const placematDays = new Set<string>();
+
   for (const event of activityLog) {
     const key = keyFn(event.timestamp);
     if (!dataMap[key]) continue;
     if (event.type === 'meditation')  dataMap[key].completions.meditation++;
     if (event.type === 'sixty_eight') dataMap[key].completions.sixty_eight++;
     if (event.type === 'emotion')     dataMap[key]._emotions.push(event.level);
+    if (event.type === 'placemat')    placematDays.add(key);
   }
 
   for (const key of periods) {
@@ -197,8 +200,10 @@ export async function loadReportData(scale: Scale): Promise<PeriodData[]> {
     if (dataMap[key]) dataMap[key].completions.focus_wheel++;
   }
   for (const placemat of placemats) {
-    const key = keyFn(placemat.createdAt);
-    if (dataMap[key]) dataMap[key].completions.placemat++;
+    placematDays.add(keyFn(placemat.createdAt));
+  }
+  for (const day of placematDays) {
+    if (dataMap[day]) dataMap[day].completions.placemat++;
   }
   for (const pivot of pivots) {
     const key = keyFn(pivot.createdAt);

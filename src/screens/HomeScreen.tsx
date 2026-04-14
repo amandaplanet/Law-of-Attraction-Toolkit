@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Modal,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +21,12 @@ export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const posthog = usePostHog();
   const [aboutVisible, setAboutVisible] = useState(false);
+
+  const handleShare = async () => {
+    await Share.share({
+      message: 'Check out this Law of Attraction toolkit app! https://apps.apple.com/app/id6738063860',
+    });
+  };
 
   return (
     <LinearGradient colors={['#E8D5F5', '#FFD6E0']} style={styles.gradient}>
@@ -156,7 +163,7 @@ export default function HomeScreen() {
             >
               <Text style={styles.cardEmoji}>📊</Text>
               <View style={styles.cardText}>
-                <Text style={styles.cardTitle}>Your Progress</Text>
+                <Text style={styles.cardTitle}>My Journey</Text>
                 <Text style={styles.cardDesc}>
                   Track your emotional level and practice over time
                 </Text>
@@ -180,6 +187,9 @@ export default function HomeScreen() {
               <Text style={styles.modalBody}>
                 This app is an independent project and is not created by, affiliated with, or endorsed by Abraham-Hicks Publications.{'\n\n'}The teachings, processes, and concepts referenced in this app are by Abraham-Hicks, © Jerry & Esther Hicks. For more information, visit AbrahamHicks.com or call (830) 755-2299.{'\n\n'}This app is created by a fan for the community, out of love for the teachings.
               </Text>
+              <TouchableOpacity style={styles.modalShare} onPress={handleShare}>
+                <Text style={styles.modalShareText}>Share with a friend 💌</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.modalClose} onPress={() => setAboutVisible(false)}>
                 <Text style={styles.modalCloseText}>Close</Text>
               </TouchableOpacity>
@@ -316,6 +326,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito_400Regular',
     lineHeight: 24,
     textAlign: 'center',
+  },
+  modalShare: {
+    alignSelf: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 32,
+    backgroundColor: '#7B4FA6',
+    borderRadius: 20,
+  },
+  modalShareText: {
+    fontSize: 17,
+    color: '#fff',
+    fontFamily: 'Nunito_700Bold',
   },
   modalClose: {
     alignSelf: 'center',

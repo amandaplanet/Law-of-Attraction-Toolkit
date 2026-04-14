@@ -17,6 +17,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { PlacematItem, Placemat } from '../types';
 import { getDraft, saveDraft, archivePlacemat, makeEmptyPlacemat } from '../storage/placematStorage';
+import { logActivity } from '../storage/activityStorage';
 import { usePostHog } from 'posthog-react-native';
 import InfoButton from '../components/InfoButton';
 
@@ -71,6 +72,10 @@ export default function PlacematScreen() {
   };
 
   const toggleDone = (id: string) => {
+    const item = placemat.items.find((i) => i.id === id);
+    if (item && !item.done) {
+      logActivity({ type: 'placemat', timestamp: new Date().toISOString() });
+    }
     updateItems((items) => items.map((i) => i.id === id ? { ...i, done: !i.done } : i));
   };
 

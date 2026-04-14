@@ -80,7 +80,25 @@ export type Workshop = {
   archive: WorkshopArchiveEntry[];
 };
 
+export type ThirtyDayEntry = {
+  date: string;             // YYYY-MM-DD
+  emotionBefore: number | null;
+  emotionAfter: number | null;
+  meditationDone: boolean;
+  bookDone: boolean;
+  completed: boolean;
+};
+
+export type ThirtyDayProcess = {
+  id: string;
+  startedAt: string;        // ISO
+  completedAt?: string;     // ISO — set when day 30 is done
+  abandonedAt?: string;     // ISO — set when 4+ days missed and user restarts
+  days: ThirtyDayEntry[];
+};
+
 export type ActivityEvent =
   | { type: 'meditation'; timestamp: string; durationMins: number }
   | { type: 'sixty_eight'; timestamp: string }
-  | { type: 'emotion'; timestamp: string; level: number };
+  | { type: 'emotion'; timestamp: string; level: number }
+  | { type: 'placemat'; timestamp: string };
