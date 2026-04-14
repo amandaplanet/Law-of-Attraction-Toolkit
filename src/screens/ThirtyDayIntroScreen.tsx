@@ -24,6 +24,11 @@ const STEPS = [
     body: 'Settle into stillness. Release all thought and let Source fill the space.',
   },
   {
+    emoji: '💫',
+    title: 'Segment Intending',
+    body: 'Reach for easy, good-feeling thoughts and notice what\'s already working. Set the tone for what comes next.',
+  },
+  {
     emoji: '📖',
     title: 'Book of Positive Aspects',
     body: 'Choose a subject you love and write what you genuinely appreciate about it.',
@@ -91,7 +96,7 @@ export default function ThirtyDayIntroScreen() {
           {/* Intro copy */}
           <Text style={styles.body}>
             Each morning, before you begin your day, spend a few quiet minutes
-            with three of the most powerful tools in the Abraham-Hicks toolkit.
+            with these powerful tools from the Abraham-Hicks toolkit.
           </Text>
 
           {/* Steps */}

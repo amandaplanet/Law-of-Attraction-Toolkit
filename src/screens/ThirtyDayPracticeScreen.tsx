@@ -34,6 +34,7 @@ type PracticeStep =
   | 'emotion-before'
   | 'meditation'
   | 'meditation-done'
+  | 'segment-intending'
   | 'book'
   | 'book-done'
   | 'focus-wheel'
@@ -70,7 +71,7 @@ function determineStep(entry: ThirtyDayEntry): PracticeStep {
   if (entry.completed)                 return 'complete';
   if (entry.emotionBefore === null)    return 'emotion-before';
   if (!entry.meditationDone)           return 'meditation';
-  if (!entry.bookDone)                 return 'book';
+  if (!entry.bookDone)                 return 'segment-intending';
   if (!entry.focusWheelDone)           return 'focus-wheel';
   if (entry.emotionAfter === null)     return 'emotion-after';
   return 'complete';
@@ -296,16 +297,17 @@ export default function ThirtyDayPracticeScreen() {
   // ── Step header ────────────────────────────────────────────────────────────
 
   const stepNumbers: Record<PracticeStep, string> = {
-    'loading':           '',
-    'emotion-before':    'Step 1 of 5',
-    'meditation':        'Step 2 of 5',
-    'meditation-done':   'Step 2 of 5',
-    'book':              'Step 3 of 5',
-    'book-done':         'Step 3 of 5',
-    'focus-wheel':       'Step 4 of 5',
-    'focus-wheel-done':  'Step 4 of 5',
-    'emotion-after':     'Step 5 of 5',
-    'complete':          '',
+    'loading':             '',
+    'emotion-before':      'Step 1 of 6',
+    'meditation':          'Step 2 of 6',
+    'meditation-done':     'Step 2 of 6',
+    'segment-intending':   'Step 3 of 6',
+    'book':                'Step 4 of 6',
+    'book-done':           'Step 4 of 6',
+    'focus-wheel':         'Step 5 of 6',
+    'focus-wheel-done':    'Step 5 of 6',
+    'emotion-after':       'Step 6 of 6',
+    'complete':            '',
   };
 
   // ── Emotion picker (shared for before/after) ───────────────────────────────
@@ -364,6 +366,46 @@ export default function ThirtyDayPracticeScreen() {
               })}
             </View>
           </ScrollView>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  // ── Segment intending ─────────────────────────────────────────────────────
+
+  if (step === 'segment-intending') {
+    return (
+      <View style={styles.bg}>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.stepHeader}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+              <Text style={styles.backText}>‹ Back</Text>
+            </TouchableOpacity>
+            <View style={styles.stepHeaderCenter}>
+              <Text style={styles.stepDay}>Day {dayNum}</Text>
+              <Text style={styles.stepNum}>{stepNumbers[step]}</Text>
+            </View>
+            <View style={{ width: 80 }} />
+          </View>
+
+          <View style={styles.toolStepWrap}>
+            <View style={styles.toolCard}>
+              <Text style={styles.toolEmoji}>💫</Text>
+              <Text style={styles.toolTitle}>Segment Intending</Text>
+              <Text style={styles.toolBody}>
+                Before you write, take a moment to look for things to appreciate.
+                Notice what's already good. Let easy, good-feeling thoughts flow —
+                small ones count. You're setting the stage for what comes next.
+              </Text>
+              <TouchableOpacity
+                style={styles.openToolBtn}
+                onPress={() => setStep('book')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.openToolBtnText}>I'm ready  →</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </SafeAreaView>
       </View>
     );
