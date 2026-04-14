@@ -154,10 +154,11 @@ export default function ThirtyDayPracticeScreen() {
     const completedCount = getCompletedCount(process);
     const updated = { ...entry, emotionAfter: level, completed: true };
     const newProc = await saveEntry(updated);
-    setStep('complete');
-    // If this was day 30, finalize the process
     if (newProc && completedCount + 1 >= 30) {
       await finalizeProcess(newProc, 'completed');
+      navigation.replace('ThirtyDayCompletion');
+    } else {
+      setStep('complete');
     }
   };
 

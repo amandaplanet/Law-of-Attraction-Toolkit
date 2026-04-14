@@ -22,9 +22,11 @@ import {
 import { logActivity } from '../storage/activityStorage';
 import {
   getActiveProcess,
+  getCompletedProcesses,
   getCompletedCount,
   getTodayEntry,
   getDaysMissed,
+  hasPerfectAttendance,
 } from '../storage/thirtyDayStorage';
 import { ThirtyDayProcess } from '../types';
 
@@ -795,6 +797,66 @@ const rowStyles = StyleSheet.create({
   },
 });
 
+// ── Badges section ────────────────────────────────────────────────────────────
+
+function BadgeItem({
+  emoji,
+  color,
+  glowColor,
+  title,
+  subtitle,
+}: {
+  emoji: string;
+  color: string;
+  glowColor: string;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <View style={badgeSectionStyles.item}>
+      <View style={[badgeSectionStyles.circle, { backgroundColor: color, shadowColor: glowColor }]}>
+        <Text style={badgeSectionStyles.emoji}>{emoji}</Text>
+      </View>
+      <Text style={badgeSectionStyles.title}>{title}</Text>
+      <Text style={badgeSectionStyles.subtitle}>{subtitle}</Text>
+    </View>
+  );
+}
+
+const badgeSectionStyles = StyleSheet.create({
+  wrap: {
+    marginBottom: 20,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  item: {
+    flex: 1,
+    backgroundColor: '#1A0A2E',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(176,138,212,0.15)',
+  },
+  circle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
+  emoji:    { fontSize: 26 },
+  title:    { fontSize: 13, color: '#E8D5F5', fontFamily: 'Nunito_700Bold', textAlign: 'center' },
+  subtitle: { fontSize: 11, color: '#7B5FA0', fontFamily: 'Nunito_400Regular', textAlign: 'center', lineHeight: 15 },
+});
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function ReportScreen() {
@@ -803,12 +865,18 @@ export default function ReportScreen() {
   const [scale, setScale] = useState<Scale>('7d');
   const [data,  setData]  = useState<PeriodData[] | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [thirtyDay, setThirtyDay] = useState<ThirtyDayProcess | null | undefined>(undefined);
+  const [thirtyDay,    setThirtyDay]    = useState<ThirtyDayProcess | null | undefined>(undefined);
+  const [has30Badge,   setHas30Badge]   = useState(false);
+  const [hasPerfect,   setHasPerfect]   = useState(false);
 
   const reload = useCallback(() => {
     setData(null);
     loadReportData(scale).then(setData);
     getActiveProcess().then(setThirtyDay);
+    getCompletedProcesses().then((procs) => {
+      setHas30Badge(procs.length > 0);
+      setHasPerfect(procs.some(hasPerfectAttendance));
+    });
   }, [scale]);
 
   useFocusEffect(reload);
@@ -849,6 +917,32 @@ export default function ReportScreen() {
           {/* 30-Day Process card */}
           {thirtyDay !== undefined && (
             <ThirtyDayProcessCard process={thirtyDay} navigation={navigation} />
+          )}
+
+          {/* Badges */}
+          {has30Badge && (
+            <View style={badgeSectionStyles.wrap}>
+              <Text style={styles.sectionTitle}>Badges</Text>
+              <View style={badgeSectionStyles.row}>
+                <BadgeItem
+                  emoji="✦"
+                  color="#7B4FA6"
+                  glowColor="#B08AD4"
+                  title="30-Day Practitioner"
+                  subtitle="Completed the full 30-day morning practice"
+                />
+                {hasPerfect && (
+                  <BadgeItem
+                    emoji="⭐"
+                    color="#B8860B"
+                    glowColor="#FFD700"
+                    title="Perfect Alignment"
+                    subtitle="Not a single day missed"
+                  />
+                )}
+                {!hasPerfect && <View style={{ flex: 1 }} />}
+              </View>
+            </View>
           )}
 
           {/* Scale selector */}

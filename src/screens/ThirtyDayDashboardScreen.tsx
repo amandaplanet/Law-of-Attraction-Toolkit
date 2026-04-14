@@ -39,17 +39,43 @@ export default function ThirtyDayDashboardScreen() {
   const navigation = useNavigation<Nav>();
   const { width } = useWindowDimensions();
   const [process, setProcess] = useState<ThirtyDayProcess | null>(null);
+  const [loaded,  setLoaded]  = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      getActiveProcess().then(setProcess);
+      getActiveProcess().then((p) => { setProcess(p); setLoaded(true); });
     }, [])
   );
 
   // Circle size: 6 per row, 6px gap
   const circleSize = Math.floor((width - 40 - 5 * 8) / 6);
 
-  if (!process) return null;
+  if (!loaded) return <View style={styles.bg} />;
+
+  if (!process) {
+    return (
+      <View style={styles.bg}>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+              <Text style={styles.backText}>‹ Back</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>30-Day Practice</Text>
+            <View style={{ width: 80 }} />
+          </View>
+          <View style={styles.noProcessWrap}>
+            <TouchableOpacity
+              style={styles.beginBtn}
+              onPress={() => navigation.replace('ThirtyDayIntro')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.beginBtnText}>Start a New Practice</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   const completedCount = getCompletedCount(process);
   const todayEntry = getTodayEntry(process);
@@ -242,15 +268,6 @@ export default function ThirtyDayDashboardScreen() {
               </TouchableOpacity>
             </View>
           )}
-
-          {/* TEMP: preview button for completion flow mockup */}
-          <TouchableOpacity
-            style={styles.previewBtn}
-            onPress={() => navigation.navigate('ThirtyDayCompletion')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.previewBtnText}>🔍 Preview completion flow</Text>
-          </TouchableOpacity>
 
           <View style={{ height: 20 }} />
         </ScrollView>
@@ -572,21 +589,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito_700Bold',
   },
 
-  // TEMP: completion preview
-  previewBtn: {
-    alignSelf: 'center',
-    marginTop: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(123,79,166,0.2)',
-    backgroundColor: 'rgba(123,79,166,0.06)',
-  },
-  previewBtnText: {
-    fontSize: 13,
-    color: '#9B72CC',
-    fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
+  noProcessWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
   },
 });

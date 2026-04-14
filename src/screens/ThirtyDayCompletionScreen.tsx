@@ -1,9 +1,4 @@
-/**
- * MOCKUP — fake data hardcoded for design preview.
- * Real data will be computed from the completed ThirtyDayProcess once design is confirmed.
- */
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,35 +10,15 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { EMOTION_COLORS, EMOTION_LABELS } from '../utils/reportLogic';
+import {
+  getLastCompletedProcess,
+  computeCompletionStats,
+  makeNewProcess,
+  saveActiveProcess,
+  CompletionStats,
+} from '../storage/thirtyDayStorage';
 
 type Nav = StackNavigationProp<RootStackParamList>;
-
-// ── Fake data ─────────────────────────────────────────────────────────────────
-
-const MOCK = {
-  totalMeditations:  30,
-  totalBookEntries:  30,
-  avgBefore:         11,  // "Overwhelment"
-  avgAfter:          5,   // "Optimism"
-  bestDayDate:       'Day 18',
-  bestDayBefore:     16,  // "Discouragement"
-  bestDayAfter:      3,   // "Enthusiasm"
-  perfectAttendance: true,
-};
-
-// Helper: pick slide 3 copy based on average shift
-function getShiftCopy(avgBefore: number, avgAfter: number) {
-  const delta = avgBefore - avgAfter; // positive = improved (lower # = higher vibe)
-  if (delta >= 3) {
-    return { kicker: 'Your shift', title: 'Every morning,\nyou moved the needle.' };
-  } else if (delta >= 1) {
-    return { kicker: 'Your shift', title: 'Every morning,\nyou lifted yourself higher.' };
-  } else if (delta >= -1) {
-    return { kicker: 'Your baseline', title: 'You were already\nflying high.' };
-  } else {
-    return { kicker: 'Your consistency', title: 'You showed up,\nevery single morning.' };
-  }
-}
 
 // ── Slide backgrounds ─────────────────────────────────────────────────────────
 
@@ -57,6 +32,21 @@ const SLIDE_BG = [
 ];
 
 const TOTAL_SLIDES = 6;
+
+// ── Helper: pick slide 3 copy based on average shift ─────────────────────────
+
+function getShiftCopy(avgBefore: number, avgAfter: number) {
+  const delta = avgBefore - avgAfter; // positive = improved (lower # = higher vibe)
+  if (delta >= 3) {
+    return { kicker: 'Your shift',       title: 'Every morning,\nyou moved the needle.' };
+  } else if (delta >= 1) {
+    return { kicker: 'Your shift',       title: 'Every morning,\nyou lifted yourself higher.' };
+  } else if (delta >= -1) {
+    return { kicker: 'Your baseline',    title: 'You were already\nflying high.' };
+  } else {
+    return { kicker: 'Your consistency', title: 'You showed up,\nevery single morning.' };
+  }
+}
 
 // ── Shared sub-components ─────────────────────────────────────────────────────
 
@@ -188,13 +178,36 @@ const dotStyles = StyleSheet.create({
 export default function ThirtyDayCompletionScreen() {
   const navigation = useNavigation<Nav>();
   const [slide, setSlide] = useState(0);
+  const [stats, setStats] = useState<CompletionStats | null>(null);
 
-  const isLastSlide = slide === TOTAL_SLIDES - 1;
+  useEffect(() => {
+    getLastCompletedProcess().then((proc) => {
+      if (proc) setStats(computeCompletionStats(proc));
+    });
+  }, []);
+
+  const isLastSlide  = slide === TOTAL_SLIDES - 1;
   const isLightSlide = slide === TOTAL_SLIDES - 1;
 
   const advance = () => {
     if (!isLastSlide) setSlide((s) => s + 1);
   };
+
+  const handleBeginRound2 = async () => {
+    const fresh = makeNewProcess();
+    await saveActiveProcess(fresh);
+    navigation.navigate('ThirtyDayDashboard');
+  };
+
+  // Slide 3 data
+  const shiftCopy = stats?.avgBefore != null && stats?.avgAfter != null
+    ? getShiftCopy(stats.avgBefore, stats.avgAfter)
+    : { kicker: 'Your consistency', title: 'You showed up,\nevery single morning.' };
+  const hasShift = stats?.avgBefore != null && stats?.avgAfter != null
+    && (stats.avgBefore - stats.avgAfter) >= 1;
+
+  // Slide 4 data
+  const hasBestDay = stats?.bestDayBefore != null && stats?.bestDayAfter != null && stats?.bestDayLabel != null;
 
   return (
     <View style={[styles.bg, { backgroundColor: SLIDE_BG[slide] }]}>
@@ -228,76 +241,82 @@ export default function ThirtyDayCompletionScreen() {
               <View style={styles.s2Row}>
                 <Text style={styles.s2Emoji}>🧘</Text>
                 <View>
-                  <Text style={styles.s2BigNum}>{MOCK.totalMeditations}</Text>
+                  <Text style={styles.s2BigNum}>{stats?.totalMeditations ?? 30}</Text>
                   <Text style={styles.s2Label}>meditations</Text>
                 </View>
               </View>
               <View style={styles.s2Row}>
                 <Text style={styles.s2Emoji}>📖</Text>
                 <View>
-                  <Text style={styles.s2BigNum}>{MOCK.totalBookEntries}</Text>
+                  <Text style={styles.s2BigNum}>{stats?.totalBookEntries ?? 30}</Text>
                   <Text style={styles.s2Label}>pages of positive aspects</Text>
                 </View>
               </View>
               <View style={styles.dividerLight} />
               <Text style={styles.s2Total}>
-                {MOCK.totalMeditations + MOCK.totalBookEntries} intentional acts of alignment.
+                {(stats?.totalMeditations ?? 30) + (stats?.totalBookEntries ?? 30)} intentional acts of alignment.
               </Text>
             </View>
           )}
 
           {/* ── Slide 3: Your Shift ── */}
-          {slide === 2 && (() => {
-            const delta = MOCK.avgBefore - MOCK.avgAfter;
-            const { kicker, title } = getShiftCopy(MOCK.avgBefore, MOCK.avgAfter);
-            const hasShift = delta >= 1;
-            return (
-              <View style={styles.slide}>
-                <Text style={styles.s3Kicker}>{kicker}</Text>
-                <Text style={styles.s3Title}>{title}</Text>
-                {hasShift ? (
+          {slide === 2 && (
+            <View style={styles.slide}>
+              <Text style={styles.s3Kicker}>{shiftCopy.kicker}</Text>
+              <Text style={styles.s3Title}>{shiftCopy.title}</Text>
+              {stats?.avgBefore != null && stats?.avgAfter != null ? (
+                hasShift ? (
                   <View style={styles.shiftRow}>
                     <View style={styles.shiftItem}>
                       <Text style={styles.shiftWhen}>Before</Text>
-                      <EmotionBadge level={MOCK.avgBefore} size={72} />
+                      <EmotionBadge level={stats.avgBefore} size={72} />
                     </View>
                     <Text style={styles.shiftArrow}>→</Text>
                     <View style={styles.shiftItem}>
                       <Text style={styles.shiftWhen}>After</Text>
-                      <EmotionBadge level={MOCK.avgAfter} size={72} />
+                      <EmotionBadge level={stats.avgAfter} size={72} />
                     </View>
                   </View>
                 ) : (
                   <View style={styles.shiftItem}>
                     <Text style={styles.shiftWhen}>Average</Text>
-                    <EmotionBadge level={MOCK.avgAfter} size={88} />
+                    <EmotionBadge level={stats.avgAfter} size={88} />
                   </View>
-                )}
-                <Text style={styles.s3Sub}>Average across all 30 days</Text>
-              </View>
-            );
-          })()}
+                )
+              ) : null}
+              <Text style={styles.s3Sub}>Average across all 30 days</Text>
+            </View>
+          )}
 
           {/* ── Slide 4: Best Day ── */}
           {slide === 3 && (
             <View style={styles.slide}>
-              <Text style={styles.s4Kicker}>Your biggest shift</Text>
-              <Text style={styles.s4Date}>{MOCK.bestDayDate}</Text>
-              <View style={styles.shiftRow}>
-                <View style={styles.shiftItem}>
-                  <Text style={styles.shiftWhen}>Before</Text>
-                  <EmotionBadge level={MOCK.bestDayBefore} size={72} />
-                </View>
-                <Text style={styles.shiftArrow}>→</Text>
-                <View style={styles.shiftItem}>
-                  <Text style={styles.shiftWhen}>After</Text>
-                  <EmotionBadge level={MOCK.bestDayAfter} size={72} />
-                </View>
-              </View>
-              <View style={styles.deltaRow}>
-                <Text style={styles.deltaNum}>+{MOCK.bestDayBefore - MOCK.bestDayAfter}</Text>
-                <Text style={styles.deltaLabel}> levels up the scale</Text>
-              </View>
+              {hasBestDay ? (
+                <>
+                  <Text style={styles.s4Kicker}>Your biggest shift</Text>
+                  <Text style={styles.s4Date}>{stats!.bestDayLabel}</Text>
+                  <View style={styles.shiftRow}>
+                    <View style={styles.shiftItem}>
+                      <Text style={styles.shiftWhen}>Before</Text>
+                      <EmotionBadge level={stats!.bestDayBefore!} size={72} />
+                    </View>
+                    <Text style={styles.shiftArrow}>→</Text>
+                    <View style={styles.shiftItem}>
+                      <Text style={styles.shiftWhen}>After</Text>
+                      <EmotionBadge level={stats!.bestDayAfter!} size={72} />
+                    </View>
+                  </View>
+                  <View style={styles.deltaRow}>
+                    <Text style={styles.deltaNum}>+{stats!.bestDayBefore! - stats!.bestDayAfter!}</Text>
+                    <Text style={styles.deltaLabel}> levels up the scale</Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.s4Kicker}>Your practice</Text>
+                  <Text style={styles.s3Title}>30 mornings.{'\n'}30 acts of alignment.</Text>
+                </>
+              )}
             </View>
           )}
 
@@ -313,7 +332,7 @@ export default function ThirtyDayCompletionScreen() {
                   title="30-Day Practitioner"
                   subtitle="Completed the full 30-day morning practice"
                 />
-                {MOCK.perfectAttendance && (
+                {stats?.perfectAttendance && (
                   <BadgeMedal
                     emoji="⭐"
                     color="#B8860B"
@@ -345,7 +364,7 @@ export default function ThirtyDayCompletionScreen() {
           <View style={styles.finalBtns}>
             <TouchableOpacity
               style={styles.beginAgainBtn}
-              onPress={() => navigation.navigate('ThirtyDayDashboard')}
+              onPress={handleBeginRound2}
               activeOpacity={0.85}
             >
               <Text style={styles.beginAgainText}>Begin Round 2  ✦</Text>
@@ -492,7 +511,7 @@ const styles = StyleSheet.create({
   },
   deltaNum: {
     fontSize: 44,
-    color: EMOTION_COLORS[2], // warm green
+    color: EMOTION_COLORS[2],
     fontFamily: 'Nunito_700Bold',
     lineHeight: 52,
   },
