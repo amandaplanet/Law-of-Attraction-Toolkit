@@ -22,6 +22,18 @@ RCT_EXPORT_METHOD(activateAudioSession) {
   AVAudioSession *session = [AVAudioSession sharedInstance];
   [session setCategory:AVAudioSessionCategoryPlayback error:nil];
   [session setActive:YES error:nil];
+
+  // iOS only shows the Now Playing widget when the app has registered
+  // remote command handlers. Without these, nowPlayingInfo is ignored.
+  dispatch_async(dispatch_get_main_queue(), ^{
+    MPRemoteCommandCenter *center = [MPRemoteCommandCenter sharedCommandCenter];
+    [center.playCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+      return MPRemoteCommandHandlerStatusSuccess;
+    }];
+    [center.pauseCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+      return MPRemoteCommandHandlerStatusSuccess;
+    }];
+  });
 }
 
 RCT_EXPORT_METHOD(setNowPlaying:(NSDictionary *)info) {

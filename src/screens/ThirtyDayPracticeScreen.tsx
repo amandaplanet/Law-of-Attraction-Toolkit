@@ -21,7 +21,7 @@ import {
   PROCESS_LENGTH,
 } from '../storage/thirtyDayStorage';
 import { usePostHog } from 'posthog-react-native';
-import { getActivityLog } from '../storage/activityStorage';
+import { getActivityLog, logActivity } from '../storage/activityStorage';
 import { getEntries } from '../storage/entriesStorage';
 import { getDraft, archiveWheel, clearDraft, getArchivedWheels } from '../storage/focusWheelStorage';
 import { ThirtyDayProcess, ThirtyDayEntry } from '../types';
@@ -160,6 +160,7 @@ export default function ThirtyDayPracticeScreen() {
 
   const handleEmotionBefore = async (level: number) => {
     if (!entry) return;
+    await logActivity({ type: 'emotion', timestamp: new Date().toISOString(), level });
     const updated = { ...entry, emotionBefore: level };
     await saveEntry(updated);
     setStep(determineStep(updated));
@@ -167,6 +168,7 @@ export default function ThirtyDayPracticeScreen() {
 
   const handleEmotionAfter = async (level: number) => {
     if (!entry || !process) return;
+    await logActivity({ type: 'emotion', timestamp: new Date().toISOString(), level });
     const completedCount = getCompletedCount(process);
     const dayNum = completedCount + 1;
     const updated = { ...entry, emotionAfter: level, completed: true };
