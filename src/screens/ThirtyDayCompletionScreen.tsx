@@ -14,8 +14,6 @@ import {
   getLastCompletedProcess,
   getCompletedProcesses,
   computeCompletionStats,
-  makeNewProcess,
-  saveActiveProcess,
   CompletionStats,
 } from '../storage/thirtyDayStorage';
 
@@ -24,6 +22,7 @@ type Nav = StackNavigationProp<RootStackParamList>;
 // ── Slide backgrounds ─────────────────────────────────────────────────────────
 
 const SLIDE_BG = [
+  '#12072A',  // 0 – intro: richest dark
   '#1A0A2E',  // 1 – achievement: deep purple
   '#0A1A35',  // 2 – practice: midnight blue
   '#1A0A2E',  // 3 – shift: deep purple
@@ -32,7 +31,7 @@ const SLIDE_BG = [
   '#FAF5FF',  // 6 – what's next: light (contrast payoff)
 ];
 
-const TOTAL_SLIDES = 6;
+const TOTAL_SLIDES = 7;
 
 // ── Helper: pick slide 3 copy based on average shift ─────────────────────────
 
@@ -220,15 +219,10 @@ export default function ThirtyDayCompletionScreen() {
 
   const isLastSlide  = slide === TOTAL_SLIDES - 1;
   const isLightSlide = slide === TOTAL_SLIDES - 1;
+  const isIntroSlide = slide === 0;
 
   const advance = () => {
     if (!isLastSlide) setSlide((s) => s + 1);
-  };
-
-  const handleBeginRound2 = async () => {
-    const fresh = makeNewProcess();
-    await saveActiveProcess(fresh);
-    navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'ThirtyDayDashboard' }] });
   };
 
   // Slide 3 data
@@ -252,8 +246,22 @@ export default function ThirtyDayCompletionScreen() {
           activeOpacity={isLastSlide ? 1 : 0.97}
         >
 
-          {/* ── Slide 1: Achievement ── */}
+          {/* ── Slide 0: Intro ── */}
           {slide === 0 && (
+            <View style={styles.slide}>
+              <Text style={styles.s0Star}>✦</Text>
+              <Text style={styles.s0Kicker}>Congratulations</Text>
+              <Text style={styles.s0Title}>You completed{'\n'}the 30-Day Process.</Text>
+              <View style={styles.dividerLight} />
+              <Text style={styles.s0Sub}>
+                Let's look back at your{'\n'}month of alignment.
+              </Text>
+              <Text style={styles.tapHint}>tap to begin</Text>
+            </View>
+          )}
+
+          {/* ── Slide 1: Achievement ── */}
+          {slide === 1 && (
             <View style={styles.slide}>
               <Text style={styles.s1Kicker}>30 days.</Text>
               <Text style={styles.s1BigNum}>30</Text>
@@ -267,7 +275,7 @@ export default function ThirtyDayCompletionScreen() {
           )}
 
           {/* ── Slide 2: Practice ── */}
-          {slide === 1 && (
+          {slide === 2 && (
             <View style={styles.slide}>
               <Text style={styles.s2Kicker}>Your practice</Text>
               <View style={styles.s2Row}>
@@ -299,7 +307,7 @@ export default function ThirtyDayCompletionScreen() {
           )}
 
           {/* ── Slide 3: Your Shift ── */}
-          {slide === 2 && (
+          {slide === 3 && (
             <View style={styles.slide}>
               <Text style={styles.s3Kicker}>{shiftCopy.kicker}</Text>
               <Text style={styles.s3Title}>{shiftCopy.title}</Text>
@@ -328,7 +336,7 @@ export default function ThirtyDayCompletionScreen() {
           )}
 
           {/* ── Slide 4: Best Day ── */}
-          {slide === 3 && (
+          {slide === 4 && (
             <View style={styles.slide}>
               {hasBestDay ? (
                 <>
@@ -360,7 +368,7 @@ export default function ThirtyDayCompletionScreen() {
           )}
 
           {/* ── Slide 5: Badges ── */}
-          {slide === 4 && (
+          {slide === 5 && (
             <View style={styles.slide}>
               <Text style={styles.s5Kicker}>You've earned</Text>
               <View style={styles.badgesRow}>
@@ -387,7 +395,7 @@ export default function ThirtyDayCompletionScreen() {
           )}
 
           {/* ── Slide 6: What's Next ── */}
-          {slide === 5 && (
+          {slide === 6 && (
             <View style={styles.slide}>
               <Text style={styles.s6Kicker}>What's next</Text>
               <Text style={styles.s6Title}>The momentum{'\n'}is yours.</Text>
@@ -405,17 +413,10 @@ export default function ThirtyDayCompletionScreen() {
           <View style={styles.finalBtns}>
             <TouchableOpacity
               style={styles.beginAgainBtn}
-              onPress={handleBeginRound2}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.beginAgainText}>Begin Round 2  ✦</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.returnBtn}
               onPress={() => navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'Report' }] })}
               activeOpacity={0.85}
             >
-              <Text style={styles.returnText}>Return to My Journey</Text>
+              <Text style={styles.beginAgainText}>Return to My Journey</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -435,6 +436,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     alignItems: 'center',
     gap: 20,
+  },
+
+  // Slide 0 – Intro
+  s0Star: {
+    fontSize: 52,
+    color: '#FFD700',
+    textShadowColor: 'rgba(255,215,0,0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+  },
+  s0Kicker: {
+    fontSize: 13,
+    color: 'rgba(255,215,0,0.6)',
+    fontFamily: 'Nunito_700Bold',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+  },
+  s0Title: {
+    fontSize: 30,
+    color: '#E8D5F5',
+    fontFamily: 'Nunito_700Bold',
+    textAlign: 'center',
+    lineHeight: 40,
+  },
+  s0Sub: {
+    fontSize: 18,
+    color: 'rgba(232,213,245,0.6)',
+    fontFamily: 'Nunito_400Regular',
+    textAlign: 'center',
+    lineHeight: 28,
   },
 
   // Slide 1
@@ -653,14 +684,5 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#F3E8FF',
     fontFamily: 'Nunito_700Bold',
-  },
-  returnBtn: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  returnText: {
-    fontSize: 16,
-    color: '#9B72CC',
-    fontFamily: 'Nunito_400Regular',
   },
 });

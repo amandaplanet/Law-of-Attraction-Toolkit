@@ -98,7 +98,7 @@ export default function CreateEntryScreen() {
     } else if (existingEntry) {
       navigation.navigate('Book', { jumpToId: existingEntry.id });
     } else {
-      navigation.navigate('Book');
+      navigation.goBack();
     }
   };
 

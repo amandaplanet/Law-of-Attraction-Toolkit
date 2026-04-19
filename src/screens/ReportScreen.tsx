@@ -806,17 +806,26 @@ function BadgeItem({
   glowColor,
   title,
   subtitle,
+  count,
 }: {
   emoji: string;
   color: string;
   glowColor: string;
   title: string;
   subtitle: string;
+  count?: number;
 }) {
   return (
     <View style={badgeSectionStyles.item}>
-      <View style={[badgeSectionStyles.circle, { backgroundColor: color, shadowColor: glowColor }]}>
-        <Text style={badgeSectionStyles.emoji}>{emoji}</Text>
+      <View>
+        <View style={[badgeSectionStyles.circle, { backgroundColor: color, shadowColor: glowColor }]}>
+          <Text style={badgeSectionStyles.emoji}>{emoji}</Text>
+        </View>
+        {count != null && count > 1 && (
+          <View style={badgeSectionStyles.countBubble}>
+            <Text style={badgeSectionStyles.countText}>{count}</Text>
+          </View>
+        )}
       </View>
       <Text style={badgeSectionStyles.title}>{title}</Text>
       <Text style={badgeSectionStyles.subtitle}>{subtitle}</Text>
@@ -856,6 +865,26 @@ const badgeSectionStyles = StyleSheet.create({
   emoji:    { fontSize: 26 },
   title:    { fontSize: 13, color: '#E8D5F5', fontFamily: 'Nunito_700Bold', textAlign: 'center' },
   subtitle: { fontSize: 11, color: '#7B5FA0', fontFamily: 'Nunito_400Regular', textAlign: 'center', lineHeight: 15 },
+  countBubble: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#1A0A2E',
+  },
+  countText: {
+    fontSize: 11,
+    color: '#1A0A2E',
+    fontFamily: 'Nunito_700Bold',
+    lineHeight: 13,
+  },
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -867,8 +896,9 @@ export default function ReportScreen() {
   const [data,  setData]  = useState<PeriodData[] | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [thirtyDay,    setThirtyDay]    = useState<ThirtyDayProcess | null | undefined>(undefined);
-  const [has30Badge,   setHas30Badge]   = useState(false);
-  const [hasPerfect,   setHasPerfect]   = useState(false);
+  const [has30Badge,      setHas30Badge]      = useState(false);
+  const [hasPerfect,      setHasPerfect]      = useState(false);
+  const [completionCount, setCompletionCount] = useState(0);
 
   const reload = useCallback(() => {
     setData(null);
@@ -877,6 +907,7 @@ export default function ReportScreen() {
     getCompletedProcesses().then((procs) => {
       setHas30Badge(procs.length > 0);
       setHasPerfect(procs.some(hasPerfectAttendance));
+      setCompletionCount(procs.length);
     });
   }, [scale]);
 
@@ -931,6 +962,7 @@ export default function ReportScreen() {
                   glowColor="#B08AD4"
                   title="30-Day Practitioner"
                   subtitle="Completed the full 30-day morning practice"
+                  count={completionCount}
                 />
                 {hasPerfect && (
                   <BadgeItem
@@ -939,6 +971,7 @@ export default function ReportScreen() {
                     glowColor="#FFD700"
                     title="Perfect Alignment"
                     subtitle="Not a single day missed"
+                    count={completionCount}
                   />
                 )}
                 {!hasPerfect && <View style={{ flex: 1 }} />}

@@ -268,7 +268,7 @@ export default function ThirtyDayDashboardScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.beginAgainBtn}
-                onPress={handleStartFresh}
+                onPress={() => navigation.navigate('ThirtyDayIntro')}
                 activeOpacity={0.85}
               >
                 <Text style={styles.beginAgainText}>Begin Another {PROCESS_LENGTH} Days</Text>

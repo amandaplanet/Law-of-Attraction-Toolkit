@@ -123,17 +123,16 @@ const SCENARIOS: {
     }),
   },
   {
-    label: 'View Completion — 29/30 days (1 gap)',
-    description: 'Seeds a completed process with a skipped day, then opens the Wrapped screen.',
+    label: 'View Completion — 30/30, missed 1 calendar day',
+    description: 'All 30 sessions done, but with a rest day in between. Earns 30-Day badge but NOT perfect attendance.',
     color: '#2A78C8',
     build: () => {
-      // 30 calendar days, day 5 (28 days ago) skipped → 29 completed entries
+      // 30 entries over 31 calendar days (one rest day after day 4).
       const entries: ThirtyDayEntry[] = [];
       for (let i = 0; i < 4; i++) entries.push(makeEntry(32 - i));  // days 1-4 (32..29 ago)
-      // skip 28 days ago (day 5)
-      for (let i = 0; i < 24; i++) entries.push(makeEntry(27 - i)); // days 6-29 (27..4 ago)
-      entries.push(makeEntry(2)); // day 30
-      // total: 4 + 24 + 1 = 29 entries ✓
+      // 28 days ago skipped (rest day)
+      for (let i = 0; i < 26; i++) entries.push(makeEntry(27 - i)); // days 5-30 (27..2 ago)
+      // total: 4 + 26 = 30 entries ✓, span = 30 calendar days → not perfect
       const process: ThirtyDayProcess = {
         ...buildProcess(entries, 32),
         completedAt: new Date().toISOString(),
