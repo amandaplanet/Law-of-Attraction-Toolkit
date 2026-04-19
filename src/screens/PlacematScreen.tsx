@@ -10,13 +10,14 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { PlacematItem, Placemat } from '../types';
-import { getDraft, saveDraft, archivePlacemat, makeEmptyPlacemat } from '../storage/placematStorage';
+import { getDraft, saveDraft, archivePlacemat, archiveSingleItem, makeEmptyPlacemat } from '../storage/placematStorage';
 import { logActivity } from '../storage/activityStorage';
 import { usePostHog } from 'posthog-react-native';
 import InfoButton from '../components/InfoButton';
@@ -29,7 +30,9 @@ function makeId() {
 
 export default function PlacematScreen() {
   const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteProp<RootStackParamList, 'Placemat'>>();
   const posthog = usePostHog();
+  const source = route.params?.source ?? 'home';
   const [placemat, setPlacemat] = useState<Placemat>(makeEmptyPlacemat());
   const [newItemText, setNewItemText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -83,6 +86,21 @@ export default function PlacematScreen() {
     updateItems((items) => items.filter((i) => i.id !== id));
   };
 
+  const archiveItem = (id: string) => {
+    const item = placemat.items.find((i) => i.id === id);
+    if (item) archiveSingleItem(item);
+    updateItems((items) => items.filter((i) => i.id !== id));
+  };
+
+  const renderArchiveAction = (id: string, bgColor: string) => (
+    <TouchableOpacity
+      style={[styles.swipeArchiveAction, { backgroundColor: bgColor }]}
+      onPress={() => archiveItem(id)}
+    >
+      <Text style={styles.swipeArchiveLabel}>Archive</Text>
+    </TouchableOpacity>
+  );
+
   const updateItemText = (id: string, text: string) => {
     updateItems((items) => items.map((i) => i.id === id ? { ...i, text } : i));
   };
@@ -98,7 +116,7 @@ export default function PlacematScreen() {
           text: 'Archive',
           onPress: async () => {
             await archivePlacemat(placemat);
-            posthog.capture('session_archived', { tool: 'placemat' });
+            posthog.capture('session_archived', { tool: 'placemat', source });
             setPlacemat(makeEmptyPlacemat());
           },
         },
@@ -223,34 +241,39 @@ export default function PlacematScreen() {
                 <Text style={styles.emptyHint}>Assign items from above with ✋</Text>
               )}
               {mine.map((item) => (
-                <View key={item.id} style={styles.checkedRow}>
-                  <TouchableOpacity onPress={() => toggleDone(item.id)} style={styles.checkbox}>
-                    {item.done
-                      ? <Text style={[styles.checkmark, { color: '#7B4FA6' }]}>✓</Text>
-                      : <View style={[styles.checkCircle, { borderColor: '#7B4FA6' }]} />
-                    }
-                  </TouchableOpacity>
-                  {editingId === item.id ? (
-                    <TextInput
-                      style={[styles.checkedText, styles.inlineEdit]}
-                      value={item.text}
-                      onChangeText={(t) => updateItemText(item.id, t)}
-                      onBlur={() => setEditingId(null)}
-                      autoFocus
-                      multiline
-                    />
-                  ) : (
-                    <TouchableOpacity style={{ flex: 1 }} onPress={() => setEditingId(item.id)}>
-                      <Text style={[styles.checkedText, item.done && styles.doneText]}>{item.text}</Text>
+                <Swipeable
+                  key={item.id}
+                  renderRightActions={() => renderArchiveAction(item.id, '#7B4FA6')}
+                >
+                  <View style={[styles.checkedRow, { backgroundColor: '#fff' }]}>
+                    <TouchableOpacity onPress={() => toggleDone(item.id)} style={styles.checkbox}>
+                      {item.done
+                        ? <Text style={[styles.checkmark, { color: '#7B4FA6' }]}>✓</Text>
+                        : <View style={[styles.checkCircle, { borderColor: '#7B4FA6' }]} />
+                      }
                     </TouchableOpacity>
-                  )}
-                  <TouchableOpacity
-                    style={[styles.moveBtn, { borderColor: '#4A90D9' }]}
-                    onPress={() => moveTo(item.id, 'universe')}
-                  >
-                    <Text style={[styles.moveBtnText, { color: '#4A90D9' }]}>→ ✨</Text>
-                  </TouchableOpacity>
-                </View>
+                    {editingId === item.id ? (
+                      <TextInput
+                        style={[styles.checkedText, styles.inlineEdit]}
+                        value={item.text}
+                        onChangeText={(t) => updateItemText(item.id, t)}
+                        onBlur={() => setEditingId(null)}
+                        autoFocus
+                        multiline
+                      />
+                    ) : (
+                      <TouchableOpacity style={{ flex: 1 }} onPress={() => setEditingId(item.id)}>
+                        <Text style={[styles.checkedText, item.done && styles.doneText]}>{item.text}</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                      style={[styles.moveBtn, { borderColor: '#4A90D9' }]}
+                      onPress={() => moveTo(item.id, 'universe')}
+                    >
+                      <Text style={[styles.moveBtnText, { color: '#4A90D9' }]}>→ ✨</Text>
+                    </TouchableOpacity>
+                  </View>
+                </Swipeable>
               ))}
             </View>
 
@@ -267,46 +290,51 @@ export default function PlacematScreen() {
                 <Text style={[styles.emptyHint, { color: '#7090B0' }]}>Assign items from above with ✨</Text>
               )}
               {universe.map((item) => (
-                <View key={item.id} style={styles.checkedRow}>
-                  <TouchableOpacity onPress={() => toggleDone(item.id)} style={styles.checkbox}>
-                    {item.done
-                      ? <Text style={[styles.checkmark, { color: '#4A90D9' }]}>✓</Text>
-                      : <View style={[styles.checkCircle, { borderColor: '#4A90D9' }]} />
-                    }
-                  </TouchableOpacity>
-                  {editingId === item.id ? (
-                    <TextInput
-                      style={[styles.checkedText, styles.inlineEdit]}
-                      value={item.text}
-                      onChangeText={(t) => updateItemText(item.id, t)}
-                      onBlur={() => setEditingId(null)}
-                      autoFocus
-                      multiline
-                    />
-                  ) : (
-                    <TouchableOpacity style={{ flex: 1 }} onPress={() => setEditingId(item.id)}>
-                      <Text style={[styles.checkedText, item.done && styles.doneText]}>{item.text}</Text>
+                <Swipeable
+                  key={item.id}
+                  renderRightActions={() => renderArchiveAction(item.id, '#4A90D9')}
+                >
+                  <View style={[styles.checkedRow, { backgroundColor: '#F0F7FF' }]}>
+                    <TouchableOpacity onPress={() => toggleDone(item.id)} style={styles.checkbox}>
+                      {item.done
+                        ? <Text style={[styles.checkmark, { color: '#4A90D9' }]}>✓</Text>
+                        : <View style={[styles.checkCircle, { borderColor: '#4A90D9' }]} />
+                      }
                     </TouchableOpacity>
-                  )}
-                  <TouchableOpacity
-                    style={[styles.moveBtn, { borderColor: '#7B4FA6' }]}
-                    onPress={() => {
-                      Alert.alert(
-                        'Reassign to yourself?',
-                        'If you feel inspired to take action on this, reassign it to yourself.',
-                        [
-                          { text: 'Leave it to the Universe', style: 'cancel' },
-                          {
-                            text: "I'm inspired to do this today",
-                            onPress: () => moveTo(item.id, 'mine'),
-                          },
-                        ]
-                      );
-                    }}
-                  >
-                    <Text style={[styles.moveBtnText, { color: '#7B4FA6' }]}>→ ✋</Text>
-                  </TouchableOpacity>
-                </View>
+                    {editingId === item.id ? (
+                      <TextInput
+                        style={[styles.checkedText, styles.inlineEdit]}
+                        value={item.text}
+                        onChangeText={(t) => updateItemText(item.id, t)}
+                        onBlur={() => setEditingId(null)}
+                        autoFocus
+                        multiline
+                      />
+                    ) : (
+                      <TouchableOpacity style={{ flex: 1 }} onPress={() => setEditingId(item.id)}>
+                        <Text style={[styles.checkedText, item.done && styles.doneText]}>{item.text}</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                      style={[styles.moveBtn, { borderColor: '#7B4FA6' }]}
+                      onPress={() => {
+                        Alert.alert(
+                          'Reassign to yourself?',
+                          'If you feel inspired to take action on this, reassign it to yourself.',
+                          [
+                            { text: 'Leave it to the Universe', style: 'cancel' },
+                            {
+                              text: "I'm inspired to do this today",
+                              onPress: () => moveTo(item.id, 'mine'),
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Text style={[styles.moveBtnText, { color: '#7B4FA6' }]}>→ ✋</Text>
+                    </TouchableOpacity>
+                  </View>
+                </Swipeable>
               ))}
             </View>
 
@@ -504,6 +532,18 @@ const styles = StyleSheet.create({
   inlineEdit: {
     flex: 1,
     padding: 0,
+  },
+
+  // Swipe-to-archive
+  swipeArchiveAction: {
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+  },
+  swipeArchiveLabel: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: 'Nunito_700Bold',
   },
 
   // Archive

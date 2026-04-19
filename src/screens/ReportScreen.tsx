@@ -296,7 +296,7 @@ function ThirtyDayProcessCard({
     return (
       <TouchableOpacity
         style={processCardStyles.card}
-        onPress={() => navigation.navigate('ThirtyDayIntro')}
+        onPress={() => navigation.replace('ThirtyDayIntro')}
         activeOpacity={0.85}
       >
         <Text style={processCardStyles.emoji}>🌅</Text>
@@ -319,7 +319,7 @@ function ThirtyDayProcessCard({
   return (
     <TouchableOpacity
       style={[processCardStyles.card, processCardStyles.cardActive]}
-      onPress={() => navigation.navigate('ThirtyDayDashboard')}
+      onPress={() => navigation.replace('ThirtyDayDashboard')}
       activeOpacity={0.85}
     >
       <View style={processCardStyles.dayBubble}>

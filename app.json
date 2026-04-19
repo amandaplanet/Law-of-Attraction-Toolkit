@@ -25,6 +25,7 @@
       "bundleIdentifier": "com.amandaplanet.AbrahamHicksToolkit"
     },
     "android": {
+      "package": "com.amandaplanet.AbrahamHicksToolkit",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -43,7 +44,8 @@
       "expo-font",
       "react-native-audio-api",
       "./plugins/withNowPlaying",
-      "./plugins/withHealthKit"
+      "./plugins/withHealthKit",
+      "./plugins/withAndroidMediaSession"
     ],
     "extra": {
       "eas": {

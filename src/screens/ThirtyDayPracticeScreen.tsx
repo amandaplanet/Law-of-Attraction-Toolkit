@@ -159,8 +159,10 @@ export default function ThirtyDayPracticeScreen() {
   };
 
   const handleEmotionBefore = async (level: number) => {
-    if (!entry) return;
+    if (!entry || !process) return;
     await logActivity({ type: 'emotion', timestamp: new Date().toISOString(), level });
+    const dayNum = getCompletedCount(process) + 1;
+    posthog.capture('thirty_day_step_completed', { step: 'emotion_before', day_num: dayNum, emotion_level: level });
     const updated = { ...entry, emotionBefore: level };
     await saveEntry(updated);
     setStep(determineStep(updated));
@@ -215,7 +217,9 @@ export default function ThirtyDayPracticeScreen() {
   };
 
   const handleBookDone = async () => {
-    if (!entry) return;
+    if (!entry || !process) return;
+    const dayNum = getCompletedCount(process) + 1;
+    posthog.capture('thirty_day_step_completed', { step: 'book', day_num: dayNum });
     const updated = { ...entry, bookDone: true };
     await saveEntry(updated);
     setStep(determineStep(updated));
@@ -285,7 +289,7 @@ export default function ThirtyDayPracticeScreen() {
 
             <TouchableOpacity
               style={styles.doneBtn}
-              onPress={() => navigation.navigate('ThirtyDayDashboard')}
+              onPress={() => navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'ThirtyDayDashboard' }] })}
               activeOpacity={0.85}
             >
               <Text style={styles.doneBtnText}>View My Progress  →</Text>
@@ -401,7 +405,10 @@ export default function ThirtyDayPracticeScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.openToolBtn}
-                onPress={() => setStep('book')}
+                onPress={() => {
+                  posthog.capture('thirty_day_step_completed', { step: 'segment_intending', day_num: dayNum });
+                  setStep('book');
+                }}
                 activeOpacity={0.85}
               >
                 <Text style={styles.openToolBtnText}>I'm ready  →</Text>
@@ -437,7 +444,8 @@ export default function ThirtyDayPracticeScreen() {
       btnLabel: 'Open Meditation',
       onNavigate: () => {
         didNavigateToMeditation.current = true;
-        navigation.navigate('Meditation');
+        posthog.capture('thirty_day_step_completed', { step: 'meditation_started', day_num: dayNum });
+        navigation.navigate('Meditation', { source: '30_day' });
       },
       onManualDone: handleMeditationDone,
       onContinue: () => setStep('book'),
@@ -496,7 +504,8 @@ export default function ThirtyDayPracticeScreen() {
             await clearDraft();
           }
         }
-        navigation.navigate('FocusWheel');
+        posthog.capture('thirty_day_step_completed', { step: 'focus_wheel_started', day_num: dayNum });
+        navigation.navigate('FocusWheel', { source: '30_day' });
       },
       onManualDone: handleFocusWheelDone,
       onContinue: () => setStep('emotion-after'),

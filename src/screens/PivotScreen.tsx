@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import {
@@ -24,7 +24,9 @@ type Nav = StackNavigationProp<RootStackParamList>;
 
 export default function PivotScreen() {
   const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteProp<RootStackParamList, 'Pivot'>>();
   const posthog = usePostHog();
+  const source = route.params?.source ?? 'home';
 
   const [dontWant, setDontWant]   = useState('');
   const [doWants,  setDoWants]    = useState<string[]>(['']);
@@ -99,7 +101,7 @@ export default function PivotScreen() {
           text: 'Archive',
           onPress: async () => {
             await archivePivot({ dontWant: dontWant.trim(), doWants: filledWants });
-            posthog.capture('session_archived', { tool: 'pivot' });
+            posthog.capture('session_archived', { tool: 'pivot', source });
             setDontWant('');
             setDoWants(['']);
             setHasArchive(true);

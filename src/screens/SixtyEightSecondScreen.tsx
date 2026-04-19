@@ -7,7 +7,8 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import Svg, { Circle } from 'react-native-svg';
 import { usePostHog } from 'posthog-react-native';
 import { logActivity } from '../storage/activityStorage';
@@ -49,8 +50,10 @@ type TimerState = 'idle' | 'running' | 'done';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function SixtyEightSecondScreen() {
-  const navigation   = useNavigation();
+  const navigation = useNavigation();
+  const route = useRoute<RouteProp<RootStackParamList, 'SixtyEightSecond'>>();
   const posthog = usePostHog();
+  const source = route.params?.source ?? 'home';
   const [state, setState]   = useState<TimerState>('idle');
   const [elapsed, setElapsed] = useState(0);
   const prevPhaseRef = useRef(-1);
@@ -76,7 +79,7 @@ export default function SixtyEightSecondScreen() {
     if (state === 'running' && elapsed >= 68) {
       setState('done');
       logActivity({ type: 'sixty_eight', timestamp: new Date().toISOString() });
-      posthog.capture('sixty_eight_second_completed');
+      posthog.capture('sixty_eight_second_completed', { source });
     }
   }, [elapsed, state]);
 

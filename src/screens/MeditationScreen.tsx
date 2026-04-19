@@ -7,11 +7,13 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import { AudioContext, AudioBuffer } from 'react-native-audio-api';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { activateAudioSession, setNowPlaying, clearNowPlaying } from '../modules/NowPlaying';
+import { startMediaSession, stopMediaSession } from '../modules/AndroidMediaSession';
 import { saveMindfulSession } from '../modules/HealthKit';
 import { logActivity } from '../storage/activityStorage';
 import InfoButton from '../components/InfoButton';
@@ -43,11 +45,14 @@ function fmt(secs: number): string {
 
 export default function MeditationScreen() {
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<RootStackParamList, 'Meditation'>>();
   const posthog = usePostHog();
-  const [selectedMins,  setSelectedMins]  = useState(15);
-  const [selectedSound, setSelectedSound] = useState<SoundKey>('white');
-  const [timerState,    setTimerState]    = useState<TimerState>('idle');
-  const [secondsLeft,   setSecondsLeft]   = useState(15 * 60);
+  const source = route.params?.source ?? 'home';
+  const [selectedMins,      setSelectedMins]      = useState(15);
+  const [selectedSound,     setSelectedSound]     = useState<SoundKey>('white');
+  const [timerState,        setTimerState]        = useState<TimerState>('idle');
+  const [secondsLeft,       setSecondsLeft]       = useState(15 * 60);
+  const [soundDropdownOpen, setSoundDropdownOpen] = useState(false);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferRef  = useRef<AudioBuffer | null>(null);
@@ -200,7 +205,9 @@ export default function MeditationScreen() {
     setSecondsLeft(secs);
     setTimerState('running');
     sessionStartRef.current = Date.now();
+    setSoundDropdownOpen(false);
     activateAudioSession();
+    startMediaSession(`Meditation · ${selectedMins} min`);
     await startAudio(selectedSound);
     startPulse();
     setNowPlaying({ title: `Meditation · ${selectedMins} min`, elapsed: 0, duration: secs, rate: 1.0 });
@@ -228,6 +235,7 @@ export default function MeditationScreen() {
     stopPulse();
     stopAudio();
     clearNowPlaying();
+    stopMediaSession();
   };
 
   const finishSession = () => {
@@ -235,11 +243,13 @@ export default function MeditationScreen() {
     stopPulse();
     playAlarm(); // stopAudio is handled inside playAlarm to keep the session alive
     clearNowPlaying();
+    stopMediaSession();
     saveMindfulSession(sessionStartRef.current, Date.now());
     logActivity({ type: 'meditation', timestamp: new Date().toISOString(), durationMins: selectedMins });
     posthog.capture('meditation_completed', {
       duration_minutes: selectedMins,
       sound: selectedSound,
+      source,
     });
   };
 
@@ -298,18 +308,32 @@ export default function MeditationScreen() {
         </View>
 
         {/* Sound selector */}
-        <View style={styles.soundRow}>
-          {SOUNDS.map((s) => (
-            <TouchableOpacity
-              key={s.key}
-              style={[styles.soundPill, selectedSound === s.key && styles.soundPillActive]}
-              onPress={() => handleSelectSound(s.key)}
-            >
-              <Text style={[styles.soundPillText, selectedSound === s.key && styles.soundPillTextActive]}>
-                {s.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.soundSelectorWrap}>
+          <TouchableOpacity
+            style={styles.soundDropdownBtn}
+            onPress={() => setSoundDropdownOpen((o) => !o)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.soundDropdownLabel}>🎵  {currentSound.label}</Text>
+            <Text style={styles.soundChevron}>{soundDropdownOpen ? '▴' : '▾'}</Text>
+          </TouchableOpacity>
+          {soundDropdownOpen && (
+            <View style={styles.soundDropdownList}>
+              {SOUNDS.map((s) => (
+                <TouchableOpacity
+                  key={s.key}
+                  style={[styles.soundOption, selectedSound === s.key && styles.soundOptionActive]}
+                  onPress={() => { handleSelectSound(s.key); setSoundDropdownOpen(false); }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.soundOptionText, selectedSound === s.key && styles.soundOptionTextActive]}>
+                    {s.label}
+                  </Text>
+                  {selectedSound === s.key && <Text style={styles.soundOptionCheck}>✓</Text>}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Central display */}
@@ -421,23 +445,57 @@ const styles = StyleSheet.create({
   pillDisabled: { opacity: 0.4 },
   pillText:       { fontSize: 17, color: '#C4A8D4', fontFamily: 'Nunito_700Bold' },
   pillTextActive: { color: '#F3E8FF' },
-  soundRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
+  soundSelectorWrap: {
+    alignItems: 'center',
     paddingTop: 4,
     paddingBottom: 8,
+    zIndex: 10,
   },
-  soundPill: {
+  soundDropdownBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     borderWidth: 1,
-    borderColor: 'rgba(176, 138, 212, 0.25)',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    borderColor: 'rgba(176, 138, 212, 0.35)',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
   },
-  soundPillActive:     { backgroundColor: 'rgba(123, 79, 166, 0.45)', borderColor: '#B08AD4' },
-  soundPillText:       { fontSize: 16, color: '#B08AD4', fontFamily: 'Nunito_700Bold' },
-  soundPillTextActive: { color: '#F3E8FF' },
+  soundDropdownLabel: {
+    fontSize: 16,
+    color: '#C4A8D4',
+    fontFamily: 'Nunito_700Bold',
+  },
+  soundChevron: {
+    fontSize: 12,
+    color: '#B08AD4',
+  },
+  soundDropdownList: {
+    position: 'absolute',
+    top: 44,
+    minWidth: 180,
+    backgroundColor: '#1A0A2E',
+    borderWidth: 1,
+    borderColor: 'rgba(176, 138, 212, 0.3)',
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  soundOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  soundOptionActive:     { backgroundColor: 'rgba(123, 79, 166, 0.35)' },
+  soundOptionText:       { fontSize: 16, color: '#B08AD4', fontFamily: 'Nunito_700Bold' },
+  soundOptionTextActive: { color: '#F3E8FF' },
+  soundOptionCheck:      { fontSize: 14, color: '#B08AD4' },
   credits: {
     paddingHorizontal: 20,
     paddingBottom: 12,

@@ -4,7 +4,7 @@ import { ThirtyDayProcess, ThirtyDayEntry } from '../types';
 const ACTIVE_KEY  = '@thirty_day_active';
 const HISTORY_KEY = '@thirty_day_history';
 
-export const PROCESS_LENGTH = 3;
+export const PROCESS_LENGTH = 30;
 
 function makeId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -62,7 +62,7 @@ export function getTodayEntry(process: ThirtyDayProcess): ThirtyDayEntry | null 
 /**
  * How many calendar days have passed since the last completed practice
  * (or since startedAt if no days completed yet) without a practice.
- * > 3 means the user needs to start over.
+ * > 3 missed days means the user needs to start over.
  */
 export function getDaysMissed(process: ThirtyDayProcess): number {
   const completed = process.days.filter((d) => d.completed);

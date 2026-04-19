@@ -225,12 +225,12 @@ export default function EmotionalGuidanceScaleScreen() {
       emotion_label: selectedLevel ? EMOTIONS[selectedLevel - 1].label : undefined,
     });
     if (screen === 'Book') navigation.navigate('Book');
-    else if (screen === 'FocusWheel') navigation.navigate('FocusWheel');
-    else if (screen === 'SixtyEightSecond') navigation.navigate('SixtyEightSecond');
+    else if (screen === 'FocusWheel') navigation.navigate('FocusWheel', { source: 'emotional_scale' });
+    else if (screen === 'SixtyEightSecond') navigation.navigate('SixtyEightSecond', { source: 'emotional_scale' });
     else if (screen === 'CreativeWorkshop') navigation.navigate('CreativeWorkshop');
-    else if (screen === 'Placemat') navigation.navigate('Placemat');
-    else if (screen === 'Pivot') navigation.navigate('Pivot');
-    else navigation.navigate('Meditation');
+    else if (screen === 'Placemat') navigation.navigate('Placemat', { source: 'emotional_scale' });
+    else if (screen === 'Pivot') navigation.navigate('Pivot', { source: 'emotional_scale' });
+    else navigation.navigate('Meditation', { source: 'emotional_scale' });
   };
 
   return (

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import WheelView, { SECTOR_COLORS } from '../components/WheelView';
@@ -29,7 +29,9 @@ type Nav = StackNavigationProp<RootStackParamList, 'FocusWheel'>;
 
 export default function FocusWheelScreen() {
   const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteProp<RootStackParamList, 'FocusWheel'>>();
   const posthog = usePostHog();
+  const source = route.params?.source ?? 'home';
   const [wheel, setWheel] = useState<FocusWheel>(makeEmptyWheel());
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -104,7 +106,7 @@ export default function FocusWheelScreen() {
       return;
     }
     await archiveWheel(wheel);
-    posthog.capture('session_archived', { tool: 'focus_wheel' });
+    posthog.capture('session_archived', { tool: 'focus_wheel', source });
     setWheel(makeEmptyWheel());
     setActiveIndex(null);
     scrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -115,7 +117,7 @@ export default function FocusWheelScreen() {
   const spinAnim = useRef(new Animated.Value(0)).current;
 
   const handleSpin = () => {
-    posthog.capture('focus_wheel_spun');
+    posthog.capture('focus_wheel_spun', { source });
     spinAnim.setValue(0);
     Animated.timing(spinAnim, {
       toValue: 1,

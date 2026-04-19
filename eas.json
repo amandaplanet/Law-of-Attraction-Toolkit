@@ -21,6 +21,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "android": {
+        "credentialsSource": "remote"
+      },
       "env": {
         "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_9GFWZq3YTdwFvPctaEnEnX1QAvyB33E2Y4Zhv9kjyfF",
         "EXPO_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com"

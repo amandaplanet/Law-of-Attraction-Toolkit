@@ -9,34 +9,60 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { Placemat } from '../types';
-import { getArchivedPlacemats } from '../storage/placematStorage';
+import { ArchivedPlacematItem } from '../types';
+import { getArchivedItems } from '../storage/placematStorage';
 
 function shortDate(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
+  if (
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear()
+  ) {
+    return 'Today';
+  }
   if (d.getFullYear() === now.getFullYear()) {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
 }
 
+function dateKey(iso: string): string {
+  return iso.slice(0, 10); // YYYY-MM-DD
+}
+
+function listEmoji(list: ArchivedPlacematItem['list']): string {
+  if (list === 'mine') return '✋';
+  if (list === 'universe') return '✨';
+  return '📋';
+}
+
+function listColor(list: ArchivedPlacematItem['list']): string {
+  if (list === 'mine') return '#4A3060';
+  if (list === 'universe') return '#1A3A5C';
+  return '#6B8A9A';
+}
+
 export default function PlacematArchiveScreen() {
   const navigation = useNavigation();
-  const [placemats, setPlacemats] = useState<Placemat[]>([]);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [items, setItems] = useState<ArchivedPlacematItem[]>([]);
 
   useFocusEffect(useCallback(() => {
-    getArchivedPlacemats().then(setPlacemats);
+    getArchivedItems().then(setItems);
   }, []));
 
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+  // Group items by date (most recent first)
+  const groups: { dateLabel: string; key: string; items: ArchivedPlacematItem[] }[] = [];
+  for (const item of items) {
+    const key = dateKey(item.archivedAt);
+    const existing = groups.find((g) => g.key === key);
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      groups.push({ key, dateLabel: shortDate(item.archivedAt), items: [item] });
+    }
+  }
 
   return (
     <LinearGradient colors={['#E8F4FD', '#EEE0FA']} style={styles.gradient}>
@@ -49,85 +75,45 @@ export default function PlacematArchiveScreen() {
           <View style={{ width: 80 }} />
         </View>
 
-        {placemats.length === 0 ? (
+        {items.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>✨</Text>
-            <Text style={styles.emptyTitle}>No archived lists yet</Text>
+            <Text style={styles.emptyTitle}>Nothing archived yet</Text>
             <Text style={styles.emptyBody}>
-              Tap "Archive & Start Fresh" on your placemat to save it here.
+              Swipe left on tasks to archive them, or tap "Archive & Start Fresh" to clear your whole list.
             </Text>
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
             <Text style={styles.count}>
-              {placemats.length} {placemats.length === 1 ? 'placemat' : 'placemats'} archived
+              {items.length} {items.length === 1 ? 'task' : 'tasks'} archived
             </Text>
 
-            {placemats.map((p) => {
-              const expanded = expandedIds.has(p.id);
-              const mine     = p.items.filter((i) => i.list === 'mine');
-              const universe = p.items.filter((i) => i.list === 'universe');
-              const inbox    = p.items.filter((i) => i.list === 'inbox');
-              const date     = shortDate(p.createdAt);
-
-              return (
-                <View key={p.id} style={styles.card}>
-                  <TouchableOpacity
-                    style={styles.cardHeader}
-                    onPress={() => toggleExpand(p.id)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={{ flex: 1, marginRight: 8 }}>
-                      <Text style={styles.cardDate}>{date}</Text>
-                      <Text style={styles.cardMeta}>
-                        ✋ {mine.length}  ·  ✨ {universe.length}
-                        {inbox.length > 0 ? `  ·  📋 ${inbox.length} unsorted` : ''}
+            {groups.map((group) => (
+              <View key={group.key} style={styles.group}>
+                <Text style={styles.dateHeader}>{group.dateLabel}</Text>
+                <View style={styles.card}>
+                  {group.items.map((item, idx) => (
+                    <View
+                      key={item.id}
+                      style={[styles.itemRow, idx > 0 && styles.itemRowBorder]}
+                    >
+                      <Text style={styles.itemEmoji}>{listEmoji(item.list)}</Text>
+                      <Text
+                        style={[
+                          styles.itemText,
+                          { color: listColor(item.list) },
+                          item.done && styles.doneText,
+                        ]}
+                      >
+                        {item.text}
                       </Text>
+                      {item.done && <Text style={styles.doneCheck}>✓</Text>}
                     </View>
-                    <Text style={styles.chevron}>{expanded ? '▲' : '▼'}</Text>
-                  </TouchableOpacity>
-
-                  {expanded && (
-                    <View style={styles.cardBody}>
-                      {mine.length > 0 && (
-                        <>
-                          <Text style={styles.listLabel}>✋ I handled this</Text>
-                          {mine.map((item) => (
-                            <View key={item.id} style={styles.itemRow}>
-                              <Text style={[styles.itemText, item.done && styles.doneText]}>
-                                {item.done ? '✓ ' : '• '}{item.text}
-                              </Text>
-                            </View>
-                          ))}
-                        </>
-                      )}
-                      {universe.length > 0 && (
-                        <>
-                          <Text style={[styles.listLabel, { color: '#4A90D9', marginTop: mine.length > 0 ? 12 : 0 }]}>✨ Universe handled this</Text>
-                          {universe.map((item) => (
-                            <View key={item.id} style={styles.itemRow}>
-                              <Text style={[styles.itemText, { color: '#4A70A0' }, item.done && styles.doneText]}>
-                                {item.done ? '✓ ' : '• '}{item.text}
-                              </Text>
-                            </View>
-                          ))}
-                        </>
-                      )}
-                      {inbox.length > 0 && (
-                        <>
-                          <Text style={[styles.listLabel, { color: '#8A9AAA', marginTop: 12 }]}>📋 Unsorted</Text>
-                          {inbox.map((item) => (
-                            <View key={item.id} style={styles.itemRow}>
-                              <Text style={[styles.itemText, { color: '#8A9AAA' }]}>• {item.text}</Text>
-                            </View>
-                          ))}
-                        </>
-                      )}
-                    </View>
-                  )}
+                  ))}
                 </View>
-              );
-            })}
+              </View>
+            ))}
           </ScrollView>
         )}
       </SafeAreaView>
@@ -152,13 +138,14 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
   emptyEmoji: { fontSize: 56, marginBottom: 16 },
   emptyTitle: { fontSize: 22, color: '#4A3060', fontFamily: 'Pacifico_400Regular', marginBottom: 10 },
-  emptyBody: { fontSize: 17, color: '#5A7A9A', fontFamily: 'Nunito_400Regular', textAlign: 'center', lineHeight: 22 },
-  scroll: { padding: 18, paddingBottom: 48 },
-  count: { fontSize: 16, color: '#5A7A9A', fontFamily: 'Nunito_400Regular', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 },
+  emptyBody: { fontSize: 17, color: '#5A7A9A', fontFamily: 'Nunito_400Regular', textAlign: 'center', lineHeight: 24 },
+  scroll: { padding: 18, paddingBottom: 48, gap: 20 },
+  count: { fontSize: 15, color: '#5A7A9A', fontFamily: 'Nunito_400Regular', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 },
+  group: { gap: 8 },
+  dateHeader: { fontSize: 14, color: '#7B4FA6', fontFamily: 'Nunito_700Bold', textTransform: 'uppercase', letterSpacing: 1 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 18,
-    marginBottom: 14,
     overflow: 'hidden',
     shadowColor: '#B0C8D8',
     shadowOpacity: 0.15,
@@ -166,13 +153,24 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  cardDate: { fontSize: 18, color: '#2E1A47', fontFamily: 'Nunito_700Bold', marginBottom: 3 },
-  cardMeta: { fontSize: 15, color: '#5A7A9A', fontFamily: 'Nunito_400Regular' },
-  chevron: { fontSize: 16, color: '#7B4FA6' },
-  cardBody: { paddingHorizontal: 16, paddingBottom: 16 },
-  listLabel: { fontSize: 14, color: '#7B4FA6', fontFamily: 'Nunito_700Bold', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
-  itemRow: { paddingVertical: 4, borderTopWidth: 1, borderTopColor: '#F0F4F8' },
-  itemText: { fontSize: 16, color: '#2E3A4A', fontFamily: 'Nunito_400Regular', lineHeight: 22 },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  itemRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: '#F0F4F8',
+  },
+  itemEmoji: { fontSize: 16 },
+  itemText: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: 'Nunito_400Regular',
+    lineHeight: 22,
+  },
   doneText: { textDecorationLine: 'line-through', color: '#A0A8B0' },
+  doneCheck: { fontSize: 15, color: '#7B4FA6', fontFamily: 'Nunito_700Bold' },
 });

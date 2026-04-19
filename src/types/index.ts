@@ -65,6 +65,14 @@ export type PlacematItem = {
   done: boolean;
 };
 
+export type ArchivedPlacematItem = {
+  id: string;
+  text: string;
+  list: 'inbox' | 'mine' | 'universe';
+  done: boolean;
+  archivedAt: string;
+};
+
 export type Placemat = {
   id: string;
   items: PlacematItem[];

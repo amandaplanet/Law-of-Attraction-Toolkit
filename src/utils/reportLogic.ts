@@ -1,7 +1,7 @@
 import { getActivityLog } from '../storage/activityStorage';
 import { getEntries } from '../storage/entriesStorage';
 import { getArchivedWheels } from '../storage/focusWheelStorage';
-import { getArchivedPlacemats } from '../storage/placematStorage';
+import { getArchivedItems as getArchivedPlacematItems } from '../storage/placematStorage';
 import { getArchivedPivots } from '../storage/pivotStorage';
 import { getWorkshop } from '../storage/workshopStorage';
 
@@ -151,7 +151,7 @@ export async function loadReportData(scale: Scale): Promise<PeriodData[]> {
     getActivityLog(),
     getEntries(),
     getArchivedWheels(),
-    getArchivedPlacemats(),
+    getArchivedPlacematItems(),
     getArchivedPivots(),
     getWorkshop(),
   ]);
@@ -199,8 +199,8 @@ export async function loadReportData(scale: Scale): Promise<PeriodData[]> {
     const key = keyFn(wheel.archivedAt);
     if (dataMap[key]) dataMap[key].completions.focus_wheel++;
   }
-  for (const placemat of placemats) {
-    placematDays.add(keyFn(placemat.createdAt));
+  for (const item of placemats) {
+    placematDays.add(keyFn(item.archivedAt));
   }
   for (const day of placematDays) {
     if (dataMap[day]) dataMap[day].completions.placemat++;

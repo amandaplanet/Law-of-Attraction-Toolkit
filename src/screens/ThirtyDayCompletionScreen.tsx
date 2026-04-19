@@ -12,6 +12,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { EMOTION_COLORS, EMOTION_LABELS } from '../utils/reportLogic';
 import {
   getLastCompletedProcess,
+  getCompletedProcesses,
   computeCompletionStats,
   makeNewProcess,
   saveActiveProcess,
@@ -102,17 +103,26 @@ function BadgeMedal({
   glowColor,
   title,
   subtitle,
+  count,
 }: {
   emoji: string;
   color: string;
   glowColor: string;
   title: string;
   subtitle: string;
+  count?: number;
 }) {
   return (
     <View style={medalStyles.wrap}>
-      <View style={[medalStyles.circle, { backgroundColor: color, shadowColor: glowColor }]}>
-        <Text style={medalStyles.emoji}>{emoji}</Text>
+      <View>
+        <View style={[medalStyles.circle, { backgroundColor: color, shadowColor: glowColor }]}>
+          <Text style={medalStyles.emoji}>{emoji}</Text>
+        </View>
+        {count != null && count > 1 && (
+          <View style={medalStyles.countBubble}>
+            <Text style={medalStyles.countText}>{count}</Text>
+          </View>
+        )}
       </View>
       <Text style={medalStyles.title}>{title}</Text>
       <Text style={medalStyles.subtitle}>{subtitle}</Text>
@@ -140,6 +150,26 @@ const medalStyles = StyleSheet.create({
   emoji:    { fontSize: 40 },
   title:    { fontSize: 14, color: '#fff', fontFamily: 'Nunito_700Bold', textAlign: 'center' },
   subtitle: { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'Nunito_400Regular', textAlign: 'center', lineHeight: 16 },
+  countBubble: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#1A0A2E',
+  },
+  countText: {
+    fontSize: 12,
+    color: '#1A0A2E',
+    fontFamily: 'Nunito_700Bold',
+    lineHeight: 14,
+  },
 });
 
 // ── Progress dots ─────────────────────────────────────────────────────────────
@@ -179,11 +209,13 @@ export default function ThirtyDayCompletionScreen() {
   const navigation = useNavigation<Nav>();
   const [slide, setSlide] = useState(0);
   const [stats, setStats] = useState<CompletionStats | null>(null);
+  const [completionCount, setCompletionCount] = useState(1);
 
   useEffect(() => {
     getLastCompletedProcess().then((proc) => {
       if (proc) setStats(computeCompletionStats(proc));
     });
+    getCompletedProcesses().then((procs) => setCompletionCount(procs.length));
   }, []);
 
   const isLastSlide  = slide === TOTAL_SLIDES - 1;
@@ -196,7 +228,7 @@ export default function ThirtyDayCompletionScreen() {
   const handleBeginRound2 = async () => {
     const fresh = makeNewProcess();
     await saveActiveProcess(fresh);
-    navigation.navigate('ThirtyDayDashboard');
+    navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'ThirtyDayDashboard' }] });
   };
 
   // Slide 3 data
@@ -241,27 +273,27 @@ export default function ThirtyDayCompletionScreen() {
               <View style={styles.s2Row}>
                 <Text style={styles.s2Emoji}>🧘</Text>
                 <View>
-                  <Text style={styles.s2BigNum}>{stats?.totalMeditations ?? 30}</Text>
+                  <Text style={styles.s2BigNum}>{stats?.totalMeditations ?? 0}</Text>
                   <Text style={styles.s2Label}>meditations</Text>
                 </View>
               </View>
               <View style={styles.s2Row}>
                 <Text style={styles.s2Emoji}>📖</Text>
                 <View>
-                  <Text style={styles.s2BigNum}>{stats?.totalBookEntries ?? 30}</Text>
+                  <Text style={styles.s2BigNum}>{stats?.totalBookEntries ?? 0}</Text>
                   <Text style={styles.s2Label}>pages of positive aspects</Text>
                 </View>
               </View>
               <View style={styles.s2Row}>
                 <Text style={styles.s2Emoji}>🎯</Text>
                 <View>
-                  <Text style={styles.s2BigNum}>{stats?.totalFocusWheels ?? 30}</Text>
+                  <Text style={styles.s2BigNum}>{stats?.totalFocusWheels ?? 0}</Text>
                   <Text style={styles.s2Label}>focus wheels</Text>
                 </View>
               </View>
               <View style={styles.dividerLight} />
               <Text style={styles.s2Total}>
-                {(stats?.totalMeditations ?? 30) + (stats?.totalBookEntries ?? 30) + (stats?.totalFocusWheels ?? 30)} intentional acts of alignment.
+                {(stats?.totalMeditations ?? 0) + (stats?.totalBookEntries ?? 0) + (stats?.totalFocusWheels ?? 0)} intentional acts of alignment.
               </Text>
             </View>
           )}
@@ -285,7 +317,7 @@ export default function ThirtyDayCompletionScreen() {
                     </View>
                   </View>
                 ) : (
-                  <View style={styles.shiftItem}>
+                  <View style={[styles.shiftItem, { flex: 0 }]}>
                     <Text style={styles.shiftWhen}>Average</Text>
                     <EmotionBadge level={stats.avgAfter} size={88} />
                   </View>
@@ -338,14 +370,16 @@ export default function ThirtyDayCompletionScreen() {
                   glowColor="#B08AD4"
                   title="30-Day Practitioner"
                   subtitle="Completed the full 30-day morning practice"
+                  count={completionCount}
                 />
                 {stats?.perfectAttendance && (
                   <BadgeMedal
                     emoji="⭐"
                     color="#B8860B"
                     glowColor="#FFD700"
-                    title="Perfect Alignment"
-                    subtitle="Not a single day missed"
+                    title="Unbroken Momentum"
+                    subtitle="Perfect 30-day process attendance"
+                    count={completionCount}
                   />
                 )}
               </View>
@@ -378,7 +412,7 @@ export default function ThirtyDayCompletionScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.returnBtn}
-              onPress={() => navigation.navigate('Report')}
+              onPress={() => navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'Report' }] })}
               activeOpacity={0.85}
             >
               <Text style={styles.returnText}>Return to My Journey</Text>

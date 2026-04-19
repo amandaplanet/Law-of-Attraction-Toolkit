@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { usePostHog } from 'posthog-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeScreen from '../screens/HomeScreen';
 import CreateEntryScreen from '../screens/CreateEntryScreen';
 import BookScreen from '../screens/BookScreen';
@@ -24,39 +25,62 @@ import ThirtyDayIntroScreen from '../screens/ThirtyDayIntroScreen';
 import ThirtyDayDashboardScreen from '../screens/ThirtyDayDashboardScreen';
 import ThirtyDayPracticeScreen from '../screens/ThirtyDayPracticeScreen';
 import ThirtyDayCompletionScreen from '../screens/ThirtyDayCompletionScreen';
+import ThirtyDayDebugScreen from '../screens/ThirtyDayDebugScreen';
 import { Entry } from '../types';
 
 export type RootStackParamList = {
   Home: undefined;
   Book: { jumpToId?: string } | undefined;
   CreateEntry: { entry?: Entry; goBackOnDone?: boolean } | undefined;
-  Meditation: undefined;
-  FocusWheel: undefined;
+  Meditation: { source: 'home' | 'emotional_scale' | '30_day' } | undefined;
+  FocusWheel: { source: 'home' | 'emotional_scale' | '30_day' } | undefined;
   FocusWheelArchive: undefined;
   EmotionalGuidanceScale: undefined;
-  SixtyEightSecond: undefined;
+  SixtyEightSecond: { source: 'home' | 'emotional_scale' } | undefined;
   CreativeWorkshop: undefined;
   CreativeWorkshopTopic: { topic: string; label: string; emoji: string; color: string };
   CreativeWorkshopItem: { topic: string; label: string; emoji: string; color: string; itemId?: string };
   CreativeWorkshopWant: { topic: string; label: string; emoji: string; color: string; itemId: string };
   CreativeWorkshopArchive: undefined;
-  Placemat: undefined;
+  Placemat: { source: 'home' | 'emotional_scale' } | undefined;
   PlacematArchive: undefined;
-  Pivot: undefined;
+  Pivot: { source: 'home' | 'emotional_scale' } | undefined;
   PivotArchive: undefined;
   Report: undefined;
   ThirtyDayIntro: { readOnly?: boolean } | undefined;
   ThirtyDayDashboard: undefined;
   ThirtyDayPractice: undefined;
   ThirtyDayCompletion: undefined;
+  ThirtyDayDebug: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+const DEVICE_ID_KEY = '@device_id';
+
+function randomUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
 
 export default function AppNavigator() {
   const posthog = usePostHog();
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
   const routeNameRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    async function identifyDevice() {
+      let id = await AsyncStorage.getItem(DEVICE_ID_KEY);
+      if (!id) {
+        id = randomUUID();
+        await AsyncStorage.setItem(DEVICE_ID_KEY, id);
+      }
+      posthog.identify(id);
+    }
+    identifyDevice();
+  }, []);
 
   return (
     <NavigationContainer
@@ -96,6 +120,7 @@ export default function AppNavigator() {
         <Stack.Screen name="ThirtyDayDashboard" component={ThirtyDayDashboardScreen} />
         <Stack.Screen name="ThirtyDayPractice" component={ThirtyDayPracticeScreen} />
         <Stack.Screen name="ThirtyDayCompletion" component={ThirtyDayCompletionScreen} />
+        <Stack.Screen name="ThirtyDayDebug" component={ThirtyDayDebugScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

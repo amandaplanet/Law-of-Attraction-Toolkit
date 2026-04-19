@@ -65,7 +65,7 @@ export default function HomeScreen() {
 
   const handleShare = async () => {
     await Share.share({
-      message: 'Check out this Law of Attraction toolkit app! https://apps.apple.com/app/id6738063860',
+      message: 'Check out this Law of Attraction toolkit app! https://apps.apple.com/app/id6760269814',
     });
   };
 
@@ -73,6 +73,14 @@ export default function HomeScreen() {
     <LinearGradient colors={['#E8D5F5', '#FFD6E0']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
         <View style={styles.container}>
+          {__DEV__ && (
+            <TouchableOpacity
+              style={styles.devBtn}
+              onPress={() => navigation.navigate('ThirtyDayDebug')}
+            >
+              <Text style={styles.devBtnText}>DEV</Text>
+            </TouchableOpacity>
+          )}
           <Text style={styles.title}>Law of Attraction</Text>
           <Text style={styles.title2}>Toolkit</Text>
 
@@ -94,7 +102,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => { posthog.capture('tool_opened', { tool: 'Meditation', source: 'home' }); navigation.navigate('Meditation'); }}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Meditation', source: 'home' }); navigation.navigate('Meditation', { source: 'home' }); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>🧘</Text>
@@ -109,7 +117,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => { posthog.capture('tool_opened', { tool: '68-Second Focus', source: 'home' }); navigation.navigate('SixtyEightSecond'); }}
+              onPress={() => { posthog.capture('tool_opened', { tool: '68-Second Focus', source: 'home' }); navigation.navigate('SixtyEightSecond', { source: 'home' }); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>⏱️</Text>
@@ -139,7 +147,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => { posthog.capture('tool_opened', { tool: 'Focus Wheel', source: 'home' }); navigation.navigate('FocusWheel'); }}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Focus Wheel', source: 'home' }); navigation.navigate('FocusWheel', { source: 'home' }); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>🎯</Text>
@@ -169,7 +177,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => { posthog.capture('tool_opened', { tool: 'Placemat Process', source: 'home' }); navigation.navigate('Placemat'); }}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Placemat Process', source: 'home' }); navigation.navigate('Placemat', { source: 'home' }); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>🍽️</Text>
@@ -184,7 +192,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => { posthog.capture('tool_opened', { tool: 'Pivoting', source: 'home' }); navigation.navigate('Pivot'); }}
+              onPress={() => { posthog.capture('tool_opened', { tool: 'Pivoting', source: 'home' }); navigation.navigate('Pivot', { source: 'home' }); }}
               activeOpacity={0.85}
             >
               <Text style={styles.cardEmoji}>🔄</Text>
@@ -292,6 +300,17 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 40,
   },
+  devBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 0,
+    backgroundColor: 'rgba(120,80,180,0.15)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    zIndex: 10,
+  },
+  devBtnText: { fontSize: 11, color: '#9060C0', fontFamily: 'Nunito_700Bold', letterSpacing: 1 },
   tagline: {
     fontSize: 18,
     color: '#A88FC0',
