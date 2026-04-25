@@ -112,8 +112,41 @@ const SCENARIOS: {
     },
   },
   {
-    label: 'Missed 4+ days (needs restart)',
-    description: 'Last completed day was 5 days ago. Should show "It\'s been a little while."',
+    label: 'Missed 1 day — grace period OK',
+    description: 'Last practice was 2 days ago (1 day missed). Dashboard should show "Begin today\'s practice," NOT the restart screen.',
+    color: '#4A9A6A',
+    build: () => ({
+      active: buildProcess(
+        [makeEntry(3), makeEntry(2)],
+        4,
+      ),
+    }),
+  },
+  {
+    label: 'Missed 3 days — grace period edge (still OK)',
+    description: 'Last practice was 4 days ago (3 days missed — the maximum allowed). Dashboard should still show "Begin today\'s practice," NOT the restart screen.',
+    color: '#B07A30',
+    build: () => ({
+      active: buildProcess(
+        [makeEntry(5), makeEntry(4)],
+        6,
+      ),
+    }),
+  },
+  {
+    label: 'Reverse-order entries — grace period still works',
+    description: 'Entries stored newest-first (simulates data from older app versions). Last real practice was 2 days ago. Without the sort fix this would show the restart screen incorrectly.',
+    color: '#4A8AAA',
+    build: () => ({
+      active: buildProcess(
+        [makeEntry(2), makeEntry(10)],  // newest first, oldest last — wrong order
+        11,
+      ),
+    }),
+  },
+  {
+    label: 'Missed 4 days — needs restart',
+    description: 'Last completed day was 5 days ago (4 days missed — one past the limit). Should show "It\'s been a little while."',
     color: '#C0604A',
     build: () => ({
       active: buildProcess(

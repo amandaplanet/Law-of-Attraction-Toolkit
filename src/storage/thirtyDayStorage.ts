@@ -65,7 +65,9 @@ export function getTodayEntry(process: ThirtyDayProcess): ThirtyDayEntry | null 
  * > 3 missed days means the user needs to start over.
  */
 export function getDaysMissed(process: ThirtyDayProcess): number {
-  const completed = process.days.filter((d) => d.completed);
+  const completed = process.days
+    .filter((d) => d.completed)
+    .sort((a, b) => a.date.localeCompare(b.date));
   const refStr = completed.length > 0
     ? completed[completed.length - 1].date
     : process.startedAt.slice(0, 10);

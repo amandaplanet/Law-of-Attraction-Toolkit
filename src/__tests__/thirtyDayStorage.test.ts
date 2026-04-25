@@ -132,6 +132,31 @@ describe('getDaysMissed', () => {
     // Last completed is 3 days ago → 2 days missed
     expect(getDaysMissed(proc)).toBe(2);
   });
+
+  it('does not trigger restart when completed entries are in reverse date order', () => {
+    // Simulates data from an older app version where entries were stored newest-first.
+    // Most-recent practice was yesterday (1 day missed = well within grace period).
+    // Bug: without sorting, getDaysMissed used the last array element (5 days ago)
+    // as the reference → daysMissed=4 → restart screen shown after just 1 missed day.
+    const entries = [
+      makeEntry(1),  // yesterday — most recent, but first in array
+      makeEntry(5),  // 5 days ago — oldest, but last in array
+    ];
+    const proc = makeProcess(entries, 6);
+    expect(getDaysMissed(proc)).toBe(0);
+  });
+
+  it('returns 3 (no restart) when multiple entries are reversed and 3 days missed', () => {
+    // Grace period boundary: 3 days missed is the maximum allowed (> 3 triggers restart).
+    // Entries are in reverse order to confirm sorting is applied before the threshold check.
+    const entries = [
+      makeEntry(4),  // 4 days ago — most recent, first in array
+      makeEntry(8),  // 8 days ago — oldest, last in array
+    ];
+    const proc = makeProcess(entries, 9);
+    // Correct ref = 4 days ago → daysMissed = 3 → still in grace period
+    expect(getDaysMissed(proc)).toBe(3);
+  });
 });
 
 // ── computeCompletionStats ────────────────────────────────────────────────────

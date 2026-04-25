@@ -23,7 +23,10 @@ type Nav = StackNavigationProp<RootStackParamList, 'CreateEntry'>;
 type Route = RouteProp<RootStackParamList, 'CreateEntry'>;
 
 const EMOJI_POOL = ['🌈', '🦋', '💛', '⭐', '🌸', '🌺', '🌟', '🍀', '🌙', '🌻', '🐱', '🐶', '🐰', '🦄'];
-const randomEmoji = () => EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
+const randomEmoji = (exclude?: string) => {
+  const pool = exclude && EMOJI_POOL.length > 1 ? EMOJI_POOL.filter((e) => e !== exclude) : EMOJI_POOL;
+  return pool[Math.floor(Math.random() * pool.length)];
+};
 
 function makeId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -80,7 +83,10 @@ export default function CreateEntryScreen() {
 
   const addBullet = useCallback(() => {
     const id = makeId();
-    setBullets((prev) => [...prev, { id, emoji: randomEmoji(), text: '' }]);
+    setBullets((prev) => {
+      const last = prev[prev.length - 1]?.emoji;
+      return [...prev, { id, emoji: randomEmoji(last), text: '' }];
+    });
     setNewBulletId(id);
   }, []);
 
