@@ -25,6 +25,7 @@ import { getActivityLog, logActivity } from '../storage/activityStorage';
 import { getEntries } from '../storage/entriesStorage';
 import { getDraft, archiveWheel, clearDraft, getArchivedWheels } from '../storage/focusWheelStorage';
 import { ThirtyDayProcess, ThirtyDayEntry } from '../types';
+import { consumeBookDone, consumeFocusWheelDone } from '../utils/bookDoneSignal';
 import { EMOTION_COLORS, EMOTION_LABELS } from '../utils/reportLogic';
 
 type Nav = StackNavigationProp<RootStackParamList>;
@@ -115,14 +116,16 @@ export default function ThirtyDayPracticeScreen() {
           }
         }
         if (!e.bookDone) {
+          const bookSignalled = consumeBookDone();
           const entries = await getEntries();
-          if (entries.some((en) => en.createdAt.startsWith(today))) {
+          if (bookSignalled || entries.some((en) => en.createdAt.startsWith(today))) {
             e = { ...e, bookDone: true };
           }
         }
         if (!e.focusWheelDone) {
+          const wheelSignalled = consumeFocusWheelDone();
           const wheels = await getArchivedWheels();
-          if (wheels.some((w) => w.archivedAt?.startsWith(today))) {
+          if (wheelSignalled || wheels.some((w) => w.archivedAt?.startsWith(today))) {
             e = { ...e, focusWheelDone: true };
           }
         }
@@ -610,7 +613,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#5A3A7A',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 16,
     lineHeight: 26,
@@ -662,7 +664,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(123,79,166,0.45)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
   },
 
   // Tool step
@@ -725,7 +726,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(123,79,166,0.45)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
   },
   toolDoneTitle: {
     fontSize: 22,

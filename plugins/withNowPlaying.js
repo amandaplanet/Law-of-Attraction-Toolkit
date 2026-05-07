@@ -8,15 +8,29 @@ const path = require('path');
 const MODULE_SOURCE = `\
 #import <Foundation/Foundation.h>
 #import <React/RCTBridgeModule.h>
+#import <React/RCTEventEmitter.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
 
-@interface NowPlayingModule : NSObject <RCTBridgeModule>
+@interface NowPlayingModule : RCTEventEmitter <RCTBridgeModule>
 @end
 
-@implementation NowPlayingModule
+@implementation NowPlayingModule {
+  BOOL _hasListeners;
+}
 
 RCT_EXPORT_MODULE()
+
+- (NSArray<NSString *> *)supportedEvents {
+  return @[@"onRemoteCommand"];
+}
+
+- (void)startObserving { _hasListeners = YES; }
+- (void)stopObserving  { _hasListeners = NO; }
+
++ (BOOL)requiresMainQueueSetup {
+  return YES;
+}
 
 RCT_EXPORT_METHOD(activateAudioSession) {
   AVAudioSession *session = [AVAudioSession sharedInstance];
@@ -27,10 +41,28 @@ RCT_EXPORT_METHOD(activateAudioSession) {
   // remote command handlers. Without these, nowPlayingInfo is ignored.
   dispatch_async(dispatch_get_main_queue(), ^{
     MPRemoteCommandCenter *center = [MPRemoteCommandCenter sharedCommandCenter];
+    // Remove any previously registered targets so re-calling this is idempotent.
+    [center.playCommand removeTarget:nil];
+    [center.pauseCommand removeTarget:nil];
+    [center.togglePlayPauseCommand removeTarget:nil];
+
     [center.playCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+      if (self->_hasListeners) {
+        [self sendEventWithName:@"onRemoteCommand" body:@{@"command": @"play"}];
+      }
       return MPRemoteCommandHandlerStatusSuccess;
     }];
     [center.pauseCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+      if (self->_hasListeners) {
+        [self sendEventWithName:@"onRemoteCommand" body:@{@"command": @"pause"}];
+      }
+      return MPRemoteCommandHandlerStatusSuccess;
+    }];
+    // togglePlayPause fires from headphone single-tap and some Control Centre interactions.
+    [center.togglePlayPauseCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+      if (self->_hasListeners) {
+        [self sendEventWithName:@"onRemoteCommand" body:@{@"command": @"togglePlayPause"}];
+      }
       return MPRemoteCommandHandlerStatusSuccess;
     }];
   });

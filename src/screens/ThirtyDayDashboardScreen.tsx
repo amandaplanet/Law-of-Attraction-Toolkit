@@ -340,7 +340,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9B72CC',
     fontFamily: 'Nunito_700Bold',
-    fontStyle: 'italic',
   },
 
   // Day counter

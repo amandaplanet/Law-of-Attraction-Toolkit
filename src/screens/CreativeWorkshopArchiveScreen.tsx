@@ -291,7 +291,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#5A3A70',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     lineHeight: 22,
   },
 });

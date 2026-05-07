@@ -4,7 +4,9 @@ import { useFonts } from 'expo-font';
 import { Pacifico_400Regular } from '@expo-google-fonts/pacifico';
 import {
   Nunito_400Regular,
+  Nunito_400Regular_Italic,
   Nunito_700Bold,
+  Nunito_700Bold_Italic,
 } from '@expo-google-fonts/nunito';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -16,7 +18,9 @@ export default function App() {
   const [fontsLoaded] = useFonts({
     Pacifico_400Regular,
     Nunito_400Regular,
+    Nunito_400Regular_Italic,
     Nunito_700Bold,
+    Nunito_700Bold_Italic,
   });
 
   if (!fontsLoaded) {

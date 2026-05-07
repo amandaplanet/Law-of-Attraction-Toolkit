@@ -33,8 +33,9 @@ const WHEEL_ARCHIVE_KEY = '@focus_wheel_archive';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 
-const ACTIVE_KEY  = '@thirty_day_active';
-const HISTORY_KEY = '@thirty_day_history';
+const ACTIVE_KEY     = '@thirty_day_active';
+const HISTORY_KEY    = '@thirty_day_history';
+const DISMISSED_KEY  = '@morning_prompt_dismissed';
 
 function makeId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -314,6 +315,17 @@ export default function ThirtyDayDebugScreen() {
         <TouchableOpacity style={styles.utilBtn} onPress={resetTodayExercises}>
           <Text style={styles.utilText}>Clear today's exercise data</Text>
           <Text style={styles.utilDesc}>Removes today's meditation, book entry, and focus wheel so the practice flow sees a clean slate. Use this when the flow unexpectedly skips a step.</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.utilBtn}
+          onPress={async () => {
+            await AsyncStorage.removeItem(DISMISSED_KEY);
+            setStatus('✓ Morning prompt cleared — force-quit and reopen the app to test');
+          }}
+        >
+          <Text style={styles.utilText}>Clear morning prompt dismissed flag</Text>
+          <Text style={styles.utilDesc}>Resets the "already shown today" flag so the morning ritual prompt will fire again. Force-quit and reopen the app after tapping this.</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.resetBtn} onPress={resetAll}>

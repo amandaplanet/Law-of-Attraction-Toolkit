@@ -206,7 +206,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#6B3FA0',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -226,7 +225,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B3FA0',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
   },
   reasonRow: {
     flexDirection: 'row',

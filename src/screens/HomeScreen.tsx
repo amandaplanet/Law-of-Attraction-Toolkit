@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -36,26 +36,28 @@ export default function HomeScreen() {
   const [morningVisible, setMorningVisible] = useState(false);
   const [dayNum,         setDayNum]         = useState(1);
 
-  useFocusEffect(
-    useCallback(() => {
-      async function checkMorningPrompt() {
-        const dismissed = await AsyncStorage.getItem(DISMISSED_KEY);
-        if (dismissed === getTodayDateKey()) return;
+  const checkMorningPrompt = useCallback(async () => {
+    const [dismissed, process] = await Promise.all([
+      AsyncStorage.getItem(DISMISSED_KEY),
+      getActiveProcess(),
+    ]);
+    if (dismissed === getTodayDateKey()) return;
+    if (!process) return;
+    if (getDaysMissed(process) > 3) return;
 
-        const process = await getActiveProcess();
-        if (!process) return;
-        if (getDaysMissed(process) > 3) return;
+    const todayEntry = getTodayEntry(process);
+    if (todayEntry?.completed) return;
 
-        const todayEntry = getTodayEntry(process);
-        if (todayEntry?.completed) return;
+    const completed = getCompletedCount(process);
+    setDayNum(Math.min(completed + 1, PROCESS_LENGTH));
+    setMorningVisible(true);
+  }, []);
 
-        const completed = getCompletedCount(process);
-        setDayNum(Math.min(completed + 1, PROCESS_LENGTH));
-        setMorningVisible(true);
-      }
-      checkMorningPrompt();
-    }, [])
-  );
+  // Run immediately on first mount so the prompt appears on app open.
+  useEffect(() => { checkMorningPrompt(); }, []);
+
+  // Re-run every time Home regains focus (returning from another screen).
+  useFocusEffect(useCallback(() => { checkMorningPrompt(); }, [checkMorningPrompt]));
 
   const dismissMorningPrompt = async () => {
     await AsyncStorage.setItem(DISMISSED_KEY, getTodayDateKey());
@@ -390,7 +392,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B3FA0',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
   },
   aboutLink: {
     fontSize: 16,

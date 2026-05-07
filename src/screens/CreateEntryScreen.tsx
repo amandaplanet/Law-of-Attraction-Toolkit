@@ -17,6 +17,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import BulletRow from '../components/BulletRow';
 import { saveEntry, updateEntry, deleteEntry } from '../storage/entriesStorage';
+import { signalBookDone } from '../utils/bookDoneSignal';
 import { Entry, BulletItem } from '../types';
 
 type Nav = StackNavigationProp<RootStackParamList, 'CreateEntry'>;
@@ -98,8 +99,29 @@ export default function CreateEntryScreen() {
     setBullets((prev) => prev.filter((b) => b.id !== id));
   }, []);
 
-  const handleDone = () => {
+  const handleDone = async () => {
+    // Flush the debounced auto-save before navigating so storage is up-to-date
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    const hasContent = topic.trim() || bullets.some((b) => b.text.trim());
+    if (hasContent) {
+      const entry: Entry = {
+        id: entryIdRef.current,
+        topic: topic.trim() || 'Untitled',
+        bullets: bullets.filter((b) => b.text.trim()),
+        createdAt: existingEntry?.createdAt ?? new Date().toISOString(),
+      };
+      if (!hasPersistedRef.current) {
+        await saveEntry(entry);
+        hasPersistedRef.current = true;
+      } else {
+        await updateEntry(entry);
+      }
+    }
     if (goBackOnDone) {
+      if (hasContent) signalBookDone();
       navigation.goBack();
     } else if (existingEntry) {
       navigation.navigate('Book', { jumpToId: existingEntry.id });

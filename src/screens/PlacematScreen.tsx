@@ -341,7 +341,7 @@ export default function PlacematScreen() {
             {/* Archive */}
             {hasItems && (
               <TouchableOpacity style={styles.archiveBtn} onPress={handleArchive}>
-                <Text style={styles.archiveBtnText}>Archive & Start Fresh  ✦</Text>
+                <Text style={styles.archiveBtnText}>Archive All & Start Fresh  ✦</Text>
               </TouchableOpacity>
             )}
 
@@ -372,7 +372,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#5A7A9A',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     textAlign: 'center',
     paddingHorizontal: 28,
     paddingBottom: 12,
@@ -420,14 +419,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#6B8A9A',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     marginBottom: 2,
   },
   emptyHint: {
     fontSize: 15,
     color: '#A0B8C8',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     paddingVertical: 4,
   },
 

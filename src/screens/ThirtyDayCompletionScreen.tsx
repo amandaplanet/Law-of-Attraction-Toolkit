@@ -503,7 +503,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.2)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     marginTop: 12,
   },
 
@@ -561,7 +560,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.3)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
   },
 
   // Slide 4

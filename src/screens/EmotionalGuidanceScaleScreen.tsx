@@ -353,7 +353,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#C4A8D4',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -479,7 +478,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(176, 138, 212, 0.6)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
   },
   toolEmoji: { fontSize: 24 },
   toolLabel: {

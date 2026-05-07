@@ -4,16 +4,23 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest"
   },
   "jest": {
     "preset": "jest-expo",
     "testEnvironment": "node",
-    "testMatch": ["**/src/__tests__/**/*.test.ts"],
-    "moduleFileExtensions": ["ts", "tsx", "js", "json"],
+    "testMatch": [
+      "**/src/__tests__/**/*.test.ts"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json"
+    ],
     "moduleNameMapper": {
       "@react-native-async-storage/async-storage": "@react-native-async-storage/async-storage/jest/async-storage-mock"
     }

@@ -263,7 +263,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#C4A8D4',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     textAlign: 'center',
     marginBottom: 16,
   },

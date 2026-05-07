@@ -150,14 +150,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(176,138,212,0.5)',
     fontFamily: 'Nunito_700Bold',
-    fontStyle: 'italic',
   },
   dontWantText: {
     flex: 1,
     fontSize: 15,
     color: 'rgba(240,230,255,0.55)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     lineHeight: 22,
   },
   pivotDivider: {

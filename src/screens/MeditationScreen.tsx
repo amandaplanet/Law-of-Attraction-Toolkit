@@ -12,7 +12,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { AudioContext, AudioBuffer } from 'react-native-audio-api';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { activateAudioSession, setNowPlaying, clearNowPlaying } from '../modules/NowPlaying';
+import { activateAudioSession, setNowPlaying, clearNowPlaying, onRemoteCommand } from '../modules/NowPlaying';
 import { startMediaSession, stopMediaSession } from '../modules/AndroidMediaSession';
 import { saveMindfulSession } from '../modules/HealthKit';
 import { logActivity } from '../storage/activityStorage';
@@ -54,13 +54,16 @@ export default function MeditationScreen() {
   const [secondsLeft,       setSecondsLeft]       = useState(15 * 60);
   const [soundDropdownOpen, setSoundDropdownOpen] = useState(false);
 
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audioBufferRef  = useRef<AudioBuffer | null>(null);
-  const sourceNodeRef   = useRef<any>(null);
-  const isRunningRef    = useRef(false);
-  const pulseAnim       = useRef(new Animated.Value(1)).current;
-  const pulseLoopRef    = useRef<Animated.CompositeAnimation | null>(null);
-  const sessionStartRef = useRef<number>(0);
+  const audioContextRef  = useRef<AudioContext | null>(null);
+  const audioBufferRef   = useRef<AudioBuffer | null>(null);
+  const sourceNodeRef    = useRef<any>(null);
+  const isRunningRef     = useRef(false);
+  const pulseAnim        = useRef(new Animated.Value(1)).current;
+  const pulseLoopRef     = useRef<Animated.CompositeAnimation | null>(null);
+  const sessionStartRef  = useRef<number>(0);
+  const timerStateRef    = useRef<TimerState>('idle');
+  const handlePauseRef   = useRef<() => void>(() => {});
+  const handleResumeRef  = useRef<() => void>(() => {});
 
   // Load saved preferences
   useEffect(() => {
@@ -80,6 +83,21 @@ export default function MeditationScreen() {
       isRunningRef.current = false;
       stopAudio();
     };
+  }, []);
+
+  // Keep timerState ref in sync (handlePause/Resume refs updated after those fns are defined).
+  timerStateRef.current = timerState;
+
+  // Subscribe once to lock-screen / Control Centre remote commands.
+  useEffect(() => {
+    return onRemoteCommand((command) => {
+      const state = timerStateRef.current;
+      if ((command === 'pause' || command === 'togglePlayPause') && state === 'running') {
+        handlePauseRef.current();
+      } else if ((command === 'play' || command === 'togglePlayPause') && state === 'paused') {
+        handleResumeRef.current();
+      }
+    });
   }, []);
 
   // Countdown tick
@@ -228,6 +246,10 @@ export default function MeditationScreen() {
     const elapsed = selectedMins * 60 - secondsLeft;
     setNowPlaying({ title: `Meditation · ${selectedMins} min`, elapsed, duration: selectedMins * 60, rate: 1.0 });
   };
+
+  // Keep refs current so the remote command subscription (set up on mount) never goes stale.
+  handlePauseRef.current  = handlePause;
+  handleResumeRef.current = handleResume;
 
   const handleStop = () => {
     setTimerState('idle');

@@ -92,24 +92,12 @@ export default function PivotScreen() {
       Alert.alert('Add a want first', 'Write at least one thing you DO want before archiving.');
       return;
     }
-    Alert.alert(
-      'Archive this pivot?',
-      'It will be saved to your archive and you can start fresh.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Archive',
-          onPress: async () => {
-            await archivePivot({ dontWant: dontWant.trim(), doWants: filledWants });
-            posthog.capture('session_archived', { tool: 'pivot', source });
-            setDontWant('');
-            setDoWants(['']);
-            setHasArchive(true);
-            scrollRef.current?.scrollTo({ y: 0, animated: true });
-          },
-        },
-      ]
-    );
+    await archivePivot({ dontWant: dontWant.trim(), doWants: filledWants });
+    posthog.capture('session_archived', { tool: 'pivot', source });
+    setDontWant('');
+    setDoWants(['']);
+    setHasArchive(true);
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   const hasContent = dontWant.trim() || doWants.some((w) => w.trim());
@@ -300,7 +288,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#C4A8D4',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     textAlign: 'center',
     paddingHorizontal: 28,
     marginBottom: 16,
@@ -338,13 +325,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(176,138,212,0.5)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
   },
   cardHint: {
     fontSize: 14,
     color: 'rgba(196,168,212,0.6)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     lineHeight: 20,
     marginBottom: 8,
   },

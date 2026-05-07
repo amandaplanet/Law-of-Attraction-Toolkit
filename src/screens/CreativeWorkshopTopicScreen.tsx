@@ -92,7 +92,8 @@ export default function CreativeWorkshopTopicScreen() {
       createdAt: new Date().toISOString(),
     };
     await saveWantItem(topic, item);
-    setItems((prev) => [...prev, item]);
+    const w = await getWorkshop();
+    setItems(getTopicWants(w, topic));
     setNewWantText('');
     setShowAddWant(false);
     setAddingReasonFor(item.id);
@@ -448,7 +449,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#6B3FA0',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     textAlign: 'center',
     paddingHorizontal: 28,
     paddingBottom: 12,
@@ -534,7 +534,6 @@ const styles = StyleSheet.create({
     color: '#6A5080',
     fontFamily: 'Nunito_400Regular',
     lineHeight: 21,
-    fontStyle: 'italic',
   },
   deleteXSmall: { fontSize: 20, color: '#9B72CC', lineHeight: 22 },
   reasonEditInput: {

@@ -406,7 +406,6 @@ const processCardStyles = StyleSheet.create({
     fontSize: 13,
     color: '#B08AD4',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     marginTop: 2,
   },
   chevron: {
@@ -508,7 +507,6 @@ const modalStyles = StyleSheet.create({
     fontSize: 18,
     color: '#C4A8D4',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     textAlign: 'center',
     paddingBottom: 12,
   },
@@ -562,7 +560,6 @@ const modalStyles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(176,138,212,0.6)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
   },
 });
 
@@ -742,7 +739,6 @@ const rowStyles = StyleSheet.create({
     fontSize: 9,
     color: '#7B5FA0',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
   },
   logBtn: {
     width: 26,
@@ -793,7 +789,6 @@ const rowStyles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(176,138,212,0.4)',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     paddingTop: 3,
   },
 });

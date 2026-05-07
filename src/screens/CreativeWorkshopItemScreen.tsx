@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#6B3FA0',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     marginBottom: 8,
     marginTop: -4,
   },

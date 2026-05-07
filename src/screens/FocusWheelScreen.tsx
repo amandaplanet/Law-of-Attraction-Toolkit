@@ -24,6 +24,7 @@ import {
 } from '../storage/focusWheelStorage';
 import { usePostHog } from 'posthog-react-native';
 import InfoButton from '../components/InfoButton';
+import { signalFocusWheelDone } from '../utils/bookDoneSignal';
 
 type Nav = StackNavigationProp<RootStackParamList, 'FocusWheel'>;
 
@@ -34,6 +35,7 @@ export default function FocusWheelScreen() {
   const source = route.params?.source ?? 'home';
   const [wheel, setWheel] = useState<FocusWheel>(makeEmptyWheel());
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [spokeMinHeights, setSpokeMinHeights] = useState<number[]>(new Array(12).fill(0));
 
   const scrollRef = useRef<ScrollView>(null);
   const centerInputRef = useRef<TextInput>(null);
@@ -106,6 +108,7 @@ export default function FocusWheelScreen() {
       return;
     }
     await archiveWheel(wheel);
+    if (source === '30_day') signalFocusWheelDone();
     posthog.capture('session_archived', { tool: 'focus_wheel', source });
     setWheel(makeEmptyWheel());
     setActiveIndex(null);
@@ -246,11 +249,20 @@ export default function FocusWheelScreen() {
                     </View>
                     <TextInput
                       ref={(el) => { inputRefs.current[i] = el; }}
-                      style={styles.spokeInput}
+                      style={[styles.spokeInput, spokeMinHeights[i] > 0 && { minHeight: spokeMinHeights[i] }]}
                       value={spoke.text}
                       onChangeText={(t) => handleSpokeChange(i, t)}
                       onFocus={() => { setActiveIndex(i); scrollToSpoke(i); }}
                       onBlur={() => setActiveIndex((cur) => cur === i ? null : cur)}
+                      onContentSizeChange={(e) => {
+                        const h = e.nativeEvent.contentSize.height;
+                        setSpokeMinHeights((prev) => {
+                          if (prev[i] >= h) return prev;
+                          const next = [...prev];
+                          next[i] = h;
+                          return next;
+                        });
+                      }}
                       placeholder={`Statement ${i + 1}…`}
                       placeholderTextColor="#CDAEE8"
                       multiline
@@ -340,7 +352,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B3FA0',
     fontFamily: 'Nunito_400Regular',
-    fontStyle: 'italic',
     lineHeight: 22,
     marginBottom: 10,
   },

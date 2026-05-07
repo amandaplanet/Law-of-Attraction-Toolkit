@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 
 const { NowPlayingModule } = NativeModules;
 
@@ -32,4 +32,20 @@ export function clearNowPlaying(): void {
   if (Platform.OS === 'ios') {
     NowPlayingModule?.clearNowPlaying();
   }
+}
+
+type RemoteCommand = 'play' | 'pause' | 'togglePlayPause';
+
+/**
+ * Subscribes to lock-screen / Control Centre remote commands.
+ * Returns an unsubscribe function — call it in a useEffect cleanup.
+ * No-ops on Android.
+ */
+export function onRemoteCommand(handler: (command: RemoteCommand) => void): () => void {
+  if (Platform.OS !== 'ios' || !NowPlayingModule) return () => {};
+  const emitter = new NativeEventEmitter(NowPlayingModule);
+  const sub = emitter.addListener('onRemoteCommand', (event: { command: RemoteCommand }) => {
+    handler(event.command);
+  });
+  return () => sub.remove();
 }

@@ -26,8 +26,9 @@
     },
     "android": {
       "package": "com.amandaplanet.AbrahamHicksToolkit",
+      "icon": "./assets/AbrahamAppLogo.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/AbrahamAppLogo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -42,6 +43,14 @@
     },
     "plugins": [
       "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/AbrahamLaunchScreen.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#ffffff"
+        }
+      ],
       "react-native-audio-api",
       "./plugins/withNowPlaying",
       "./plugins/withHealthKit",
