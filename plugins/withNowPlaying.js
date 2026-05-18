@@ -92,10 +92,6 @@ RCT_EXPORT_METHOD(clearNowPlaying) {
   });
 }
 
-+ (BOOL)requiresMainQueueSetup {
-  return NO;
-}
-
 @end
 `;
 

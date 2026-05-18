@@ -61,6 +61,7 @@ export default function MeditationScreen() {
   const pulseAnim        = useRef(new Animated.Value(1)).current;
   const pulseLoopRef     = useRef<Animated.CompositeAnimation | null>(null);
   const sessionStartRef  = useRef<number>(0);
+  const endTimeRef       = useRef<number>(0);
   const timerStateRef    = useRef<TimerState>('idle');
   const handlePauseRef   = useRef<() => void>(() => {});
   const handleResumeRef  = useRef<() => void>(() => {});
@@ -100,11 +101,11 @@ export default function MeditationScreen() {
     });
   }, []);
 
-  // Countdown tick
+  // Countdown tick — wall-clock based so Android screen-lock doesn't desync the display
   useEffect(() => {
     if (timerState !== 'running') return;
     const interval = setInterval(() => {
-      setSecondsLeft((s) => (s > 0 ? s - 1 : 0));
+      setSecondsLeft(Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000)));
     }, 1000);
     return () => clearInterval(interval);
   }, [timerState]);
@@ -223,6 +224,7 @@ export default function MeditationScreen() {
     setSecondsLeft(secs);
     setTimerState('running');
     sessionStartRef.current = Date.now();
+    endTimeRef.current = Date.now() + secs * 1000;
     setSoundDropdownOpen(false);
     activateAudioSession();
     startMediaSession(`Meditation · ${selectedMins} min`);
@@ -240,6 +242,7 @@ export default function MeditationScreen() {
   };
 
   const handleResume = () => {
+    endTimeRef.current = Date.now() + secondsLeft * 1000;
     setTimerState('running');
     resumeAudio();
     startPulse();
